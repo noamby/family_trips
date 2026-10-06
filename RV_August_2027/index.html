@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <script>
         tailwind.config = {
@@ -17,11 +20,11 @@
                         sans: ['Nunito', 'sans-serif'],
                     },
                     colors: {
-                        nature: '#2a9d8f',   
-                        action: '#e76f51',   
+                        nature: '#14b8a6',   
+                        action: '#f97316',   
                         base: '#0f172a',     
                         accent: '#fbbf24',   
-                        gf: '#8b5cf6',       
+                        gf: '#a855f7',       
                         camp: '#3b82f6'      
                     }
                 }
@@ -38,11 +41,12 @@
             max-width: 768px;
             margin: 0 auto;
             background-color: #f8fafc;
-            min-height: 100vh;
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             box-shadow: 0 0 40px rgba(0,0,0,0.15);
             position: relative;
+            overflow: hidden;
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -62,32 +66,53 @@
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
         }
+        /* Map custom marker overrides */
+        .leaflet-div-icon {
+            background: transparent;
+            border: none;
+        }
+        /* Adjusted zoom control position to make room for custom buttons */
+        .leaflet-bottom.leaflet-right {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased">
 
     <div class="app-container">
-        <header class="bg-slate-900 text-white pt-6 pb-4 px-4 sm:px-8 shadow-lg z-20 shrink-0 relative">
-            <div class="flex justify-between items-center mb-6">
+        
+        <!-- HEADER -->
+        <header class="bg-slate-900 text-white pt-6 pb-4 px-4 sm:px-8 shadow-lg z-30 shrink-0 relative">
+            <div class="flex justify-between items-center mb-5">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-black tracking-wide text-white drop-shadow-sm">Euro RV '27</h1>
                     <p class="text-xs sm:text-sm text-accent font-bold uppercase tracking-wider mt-1"><i class="fa-solid fa-calendar-days mr-1"></i> August 14-28, 2027</p>
                 </div>
                 
                 <div class="flex gap-2 sm:gap-3">
-                    <a href="https://maps.google.com/?q=Amsterdam+Airport" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-white/20 flex items-center justify-center" title="Flights">
-                        <i class="fa-solid fa-plane-departure text-white text-lg sm:text-xl"></i>
+                    <a href="https://maps.google.com/?q=Amsterdam+Airport" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="Flights">
+                        <i class="fa-solid fa-plane-departure text-white text-lg"></i>
                     </a>
-                    <a href="https://maps.google.com/?q=RV+Rental" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-white/20 flex items-center justify-center" title="RV Rental">
-                        <i class="fa-solid fa-caravan text-accent text-lg sm:text-xl"></i>
+                    <a href="https://maps.google.com/?q=RV+Rental" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="RV Rental">
+                        <i class="fa-solid fa-caravan text-accent text-lg"></i>
                     </a>
-                    <button onclick="startCloudSync(true)" class="relative bg-blue-600 hover:bg-blue-500 transition-colors w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center group overflow-hidden" title="Sync Offline Data">
+                    <button onclick="startCloudSync(true)" class="relative bg-blue-600 hover:bg-blue-500 transition-colors w-10 h-10 rounded-xl border border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center group overflow-hidden" title="Sync Offline Data">
                         <div id="sync-button-bg" class="absolute inset-0 pointer-events-none transition-all duration-300" style="background: conic-gradient(rgba(255,255,255,0.3) 0%, transparent 0%);"></div>
                         <div class="relative z-10 w-full h-full flex items-center justify-center">
-                            <i class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500 text-white text-lg sm:text-xl" id="sync-icon"></i>
+                            <i class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500 text-white text-lg" id="sync-icon"></i>
                         </div>
                     </button>
                 </div>
+            </div>
+
+            <!-- VIEW TOGGLE -->
+            <div class="bg-slate-800 p-1.5 rounded-xl flex max-w-[280px] mx-auto mb-5 relative shadow-inner">
+                <button onclick="switchView('list')" id="tab-list" class="flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-list-ul"></i> List View
+                </button>
+                <button onclick="switchView('map')" id="tab-map" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-map-location-dot"></i> Map View
+                </button>
             </div>
 
             <div class="flex justify-between items-center mb-3">
@@ -96,30 +121,70 @@
             <nav id="camp-nav" class="flex space-x-3 overflow-x-auto no-scrollbar pb-2 snap-x"></nav>
         </header>
 
-        <div id="camp-site-banner" class="bg-blue-50 border-b border-blue-100 px-4 sm:px-8 py-3 shrink-0 flex items-center justify-between">
-            <!-- Injected via JS -->
+        <!-- LIST VIEW SECTIONS -->
+        <div id="list-view-container" class="flex flex-col flex-1 overflow-hidden relative">
+            <div id="camp-site-banner" class="bg-blue-50 border-b border-blue-100 px-4 sm:px-8 py-3 shrink-0 flex items-center justify-between z-20">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="bg-white border-b border-slate-200 z-10 shrink-0 px-4 sm:px-8 pt-3 pb-3 shadow-sm">
+                <nav id="day-nav" class="flex overflow-x-auto no-scrollbar space-x-2 sm:space-x-4 snap-x"></nav>
+            </div>
+
+            <div class="px-4 sm:px-8 pt-5 pb-2 shrink-0 bg-slate-50 z-10">
+                <div class="flex bg-slate-200 p-1.5 rounded-2xl relative max-w-md mx-auto w-full">
+                    <button id="toggle-A" onclick="setOption('A')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
+                    <button id="toggle-B" onclick="setOption('B')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
+                </div>
+            </div>
+
+            <main id="content-area" class="flex-1 overflow-y-auto px-4 sm:px-8 pb-16 pt-4 no-scrollbar relative bg-slate-50">
+                <!-- Dynamic Injection -->
+            </main>
         </div>
 
-        <div class="bg-white border-b border-slate-200 z-10 shrink-0 px-4 sm:px-8 pt-3 pb-3 shadow-sm">
-            <nav id="day-nav" class="flex overflow-x-auto no-scrollbar space-x-2 sm:space-x-4 snap-x"></nav>
-        </div>
+        <!-- MAP VIEW CONTAINER -->
+        <div id="map-view-container" class="hidden flex-1 relative w-full h-full z-10">
+            <!-- Leaflet Map attaches here -->
+            <div id="map" class="absolute inset-0 w-full h-full"></div>
+            
+            <!-- Map Overlay Banner -->
+            <div class="absolute top-4 left-4 right-4 z-[400] pointer-events-none flex justify-center">
+                <div class="bg-white/90 backdrop-blur shadow-lg rounded-full px-4 py-2 text-xs font-bold text-slate-700 flex items-center gap-2 border border-slate-200 pointer-events-auto">
+                    <span class="w-3 h-3 rounded-full bg-teal-500"></span> Nature 
+                    <span class="w-3 h-3 rounded-full bg-orange-500 ml-2"></span> Action
+                    <span class="w-3 h-3 rounded-full bg-purple-500 ml-2"></span> Eats
+                </div>
+            </div>
 
-        <div class="px-4 sm:px-8 pt-5 pb-2 shrink-0 bg-slate-50">
-            <div class="flex bg-slate-200 p-1.5 rounded-2xl relative max-w-md mx-auto w-full">
-                <button id="toggle-A" onclick="setOption('A')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2">
-                    <!-- Injected via JS -->
+            <!-- Locate Me Button -->
+            <button onclick="locateUser()" class="absolute bottom-28 right-[11px] z-[400] w-[34px] h-[34px] bg-white rounded shadow-[0_1px_5px_rgba(0,0,0,0.65)] flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors pointer-events-auto" title="Find My Location">
+                <i class="fa-solid fa-location-crosshairs text-[15px]"></i>
+            </button>
+        </div>
+        
+        <!-- AIRBNB-STYLE BOTTOM SHEET (MAP MODE) -->
+        <div id="bottom-sheet" class="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[768px] sm:mx-auto max-h-[85vh] bg-slate-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] transform translate-y-full transition-transform duration-300 z-[500] flex flex-col">
+            <!-- Drag Handle / Close Header -->
+            <div class="bg-white rounded-t-3xl border-b border-slate-200 p-3 shrink-0 flex items-center justify-between sticky top-0 z-20">
+                <div class="w-12 h-1.5 bg-slate-300 rounded-full absolute left-1/2 -translate-x-1/2 top-3"></div>
+                <h3 id="sheet-title" class="text-xs font-black uppercase tracking-wider text-slate-500 mt-2">Activity Details</h3>
+                <button onclick="closeBottomSheet()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
-                <button id="toggle-B" onclick="setOption('B')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2">
-                    <!-- Injected via JS -->
-                </button>
+            </div>
+            
+            <!-- Reused Content Area inside Sheet -->
+            <div id="bottom-sheet-content" class="flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar pb-12">
+                <!-- Rendered dynamically -->
             </div>
         </div>
 
-        <main id="content-area" class="flex-1 overflow-y-auto px-4 sm:px-8 pb-16 pt-4 no-scrollbar relative bg-slate-50">
-            <!-- Dynamic Injection -->
-        </main>
-        
-        <div id="sync-banner" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 bg-white rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-200 z-50 transform translate-y-[150%] opacity-0 transition-all duration-500 pointer-events-none">
+        <!-- OVERLAY (Darkens map when sheet is up) -->
+        <div id="sheet-overlay" onclick="closeBottomSheet()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[450] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+        <!-- SYNC MODAL -->
+        <div id="sync-banner" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 bg-white rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-200 z-[600] transform translate-y-[150%] opacity-0 transition-all duration-500 pointer-events-none">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-down text-blue-500 animate-bounce"></i>
@@ -134,84 +199,87 @@
         </div>
     </div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
         const tripData = [
             {
                 id: "camp1", shortName: "South Holland", title: "Base Camp 1: Windmills & Coast",
-                campSite: { name: "Vakantiepark Duinrell", mapLink: "https://www.google.com/maps/search/?api=1&query=Vakantiepark+Duinrell+Wassenaar" },
+                campSite: { name: "Vakantiepark Duinrell", mapLink: "https://www.google.com/maps/search/?api=1&query=Vakantiepark+Duinrell", lat: 52.1458, lng: 4.3820 },
                 days: [
                     {
                         dayLabel: "Day 1", globalIndex: 0,
                         optionA: {
-                            type: "Nature", title: "Kinderdijk Windmills",
+                            type: "Nature", title: "Kinderdijk Windmills", lat: 51.8841, lng: 4.6398,
                             wikiTopics: ["Kinderdijk", "Windpump", "Alblasserwaard", "Polder", "Windmill"],
                             tags: ["UNESCO", "Chill"], desc: "Start the morning by parking the RV at the spacious Alblasserdam P+R, then stroll or cycle along the flat, buggy-friendly paths that weave between 19 iconic 18th-century windmills. The kids will love hopping on and off the canal boat tour that cruises right past the wooden giants. Take time to explore the interior of the working museum windmill to see how the millers lived, before enjoying a relaxed picnic on the grassy banks.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Kinderdijk+Windmills",
                             logistics: { travelTime: ["45m RV drive", "10m waterbus"], rvAccess: "Park RV at Alblasserdam P+R (spacious spots).", strollerOrCarrier: "Stroller highly recommended. Paved, flat paths.", packingList: ["Umbrella", "Jacket", "Stroller"] },
                             gfEats: [
-                                { name: "Buena Vista", mapLink: "https://www.google.com/maps/search/?api=1&query=Buena+Vista+Kinderdijk", type: "Pancakes", note: "Offers dedicated GF pancake batter." },
-                                { name: "Grand Café Borghese", mapLink: "https://www.google.com/maps/search/?api=1&query=Grand+Cafe+Borghese+Alblasserdam", type: "Restaurant", note: "Knowledgeable staff and safe cross-contamination protocols." }
+                                { name: "Buena Vista", lat: 51.8861, lng: 4.6378, mapLink: "https://www.google.com/maps/search/?api=1&query=Buena+Vista+Kinderdijk", type: "Pancakes", note: "Offers dedicated GF pancake batter." },
+                                { name: "Grand Café Borghese", lat: 51.8650, lng: 4.6590, mapLink: "https://www.google.com/maps/search/?api=1&query=Grand+Cafe+Borghese+Alblasserdam", type: "Restaurant", note: "Knowledgeable staff and safe cross-contamination protocols." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Duinrell Theme Park",
+                            type: "Action", title: "Duinrell Theme Park", lat: 52.1480, lng: 4.3830,
                             wikiTopics: ["Duinrell", "Wassenaar", "Amusement_park", "Water_park", "Roller_coaster"],
                             tags: ["Indoor Pool", "High Energy"], desc: "Step right out of your RV and walk directly into the theme park! Spend the morning conquering the family-friendly rollercoasters and spinning rides, which are perfectly sized for the older kids while the toddler enjoys the gentle Wonderland area. In the afternoon, head inside to the legendary Tikibad waterpark for hours of zooming down slides and floating along the lazy river.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Duinrell+Wassenaar",
                             logistics: { travelTime: ["10m walk"], rvAccess: "Walk directly from our Duinrell RV pitch!", strollerOrCarrier: "Stroller for the park, leave at locker for pool.", packingList: ["Swimwear & Towels", "Wet Bag", "Euro Coins", "Stroller"] },
                             gfEats: [
-                                { name: "La Place Duinrell", mapLink: "https://www.google.com/maps/search/?api=1&query=La+Place+Duinrell+Wassenaar", type: "Quick Bite", note: "Pre-packaged GF salads and certified safe snacks." },
-                                { name: "Pannenkoeken Schaapskooi", mapLink: "https://www.google.com/maps/search/?api=1&query=Pannenkoekenhuis+Wassenaar", type: "Pancakes", note: "Safe GF pancakes prepared on separate griddles." }
+                                { name: "La Place Duinrell", lat: 52.1495, lng: 4.3810, mapLink: "https://www.google.com/maps/search/?api=1&query=La+Place+Duinrell+Wassenaar", type: "Quick Bite", note: "Pre-packaged GF salads and certified safe snacks." },
+                                { name: "Pannenkoeken Schaapskooi", lat: 52.1435, lng: 4.3850, mapLink: "https://www.google.com/maps/search/?api=1&query=Pannenkoekenhuis+Wassenaar", type: "Pancakes", note: "Safe GF pancakes prepared on separate griddles." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 2", globalIndex: 1,
                         optionA: {
-                            type: "Nature", title: "Zaanse Schans",
+                            type: "Nature", title: "Zaanse Schans", lat: 52.4735, lng: 4.8219,
                             wikiTopics: ["Zaanse_Schans", "Zaandam", "Zaan", "Clog_(shoe)", "Gouda_cheese"],
                             tags: ["Historical", "Picturesque"], desc: "Step back in time as you wander through this living museum village of traditional green wooden houses and working windmills. The kids can watch craftsmen carve real wooden clogs and see how giant millstones grind spices and paint pigments. After exploring the bakery museum and taking a ton of photos by the river, enjoy a relaxed afternoon browsing the vintage Dutch cheese and candy shops.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Zaanse+Schans+Zaandam",
                             logistics: { travelTime: ["1h RV drive", "5m walk"], rvAccess: "Drive RV to main parking (designated spots available).", strollerOrCarrier: "Stroller friendly, but some paths are uneven brick.", packingList: ["Umbrella", "Jacket", "Stroller"] },
                             gfEats: [
-                                { name: "De Kraai", mapLink: "https://www.google.com/maps/search/?api=1&query=De+Kraai+Zaanse+Schans", type: "Pancake House", note: "Gluten-free Dutch pancakes upon request." },
-                                { name: "De Hoop op d'Swarte Walvis", mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Hoop+op+dSwarte+Walvis+Zaandam", type: "Fine Dining", note: "Higher-end, strictly handles allergens with care." }
+                                { name: "De Kraai", lat: 52.4720, lng: 4.8200, mapLink: "https://www.google.com/maps/search/?api=1&query=De+Kraai+Zaanse+Schans", type: "Pancake House", note: "Gluten-free Dutch pancakes upon request." },
+                                { name: "De Hoop op d'Swarte Walvis", lat: 52.4755, lng: 4.8235, mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Hoop+op+dSwarte+Walvis+Zaandam", type: "Fine Dining", note: "Higher-end, strictly handles allergens with care." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Madurodam Miniature City",
+                            type: "Action", title: "Madurodam Miniature City", lat: 52.0995, lng: 4.2974,
                             wikiTopics: ["Madurodam", "The_Hague", "Miniature_park", "Binnenhof", "Rotterdam"],
                             tags: ["Interactive", "Kids Favorite"], desc: "Let the kids feel like giants as they walk through this incredibly detailed 1:25 scale miniature version of the Netherlands. They won't just look—they can actively load miniature cargo ships, operate storm surge barriers, and bid at a mini flower auction. It’s a perfect, high-energy interactive experience where they learn about Dutch culture while running between tiny trains and airplanes.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Madurodam+The+Hague",
                             logistics: { travelTime: ["25m RV drive", "15m tram"], rvAccess: "Park RV at Scheveningen P+R, take tram 9.", strollerOrCarrier: "Stroller perfect for the wide walkways.", packingList: ["Sunscreen", "Sun Hats", "Stroller"] },
                             gfEats: [
-                                { name: "Taste of Holland Cafe", mapLink: "https://www.google.com/maps/search/?api=1&query=Taste+of+Holland+Cafe+Madurodam", type: "Cafe", note: "Pre-packaged GF sandwiches to avoid cross-contamination." },
-                                { name: "Bagels & Beans", mapLink: "https://www.google.com/maps/search/?api=1&query=Bagels+Beans+The+Hague", type: "Bakery", note: "Certified GF bagels stored and prepared separately." }
+                                { name: "Taste of Holland Cafe", lat: 52.1005, lng: 4.2980, mapLink: "https://www.google.com/maps/search/?api=1&query=Taste+of+Holland+Cafe+Madurodam", type: "Cafe", note: "Pre-packaged GF sandwiches to avoid cross-contamination." },
+                                { name: "Bagels & Beans", lat: 52.0970, lng: 4.2950, mapLink: "https://www.google.com/maps/search/?api=1&query=Bagels+Beans+The+Hague", type: "Bakery", note: "Certified GF bagels stored and prepared separately." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 3", globalIndex: 2,
                         optionA: {
-                            type: "Nature", title: "Scheveningen Beach",
+                            type: "Nature", title: "Scheveningen Beach", lat: 52.1158, lng: 4.2783,
                             wikiTopics: ["Scheveningen", "Scheveningen_Pier", "North_Sea", "Beach", "Dune"],
                             tags: ["Relaxation", "Sand Play"], desc: "Head to the wide, sandy shores of the North Sea for a classic beach day. Build epic sandcastles, dip your toes in the surf, and let the kids burn off energy on the massive beachfront playground structures. Take a leisurely walk along the famous Scheveningen Pier to watch the bungee jumpers, and end the afternoon flying a kite in the coastal breeze.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Scheveningen+Beach+The+Hague",
                             logistics: { travelTime: ["30m cycle"], rvAccess: "Cycle directly from campsite or take local bus.", strollerOrCarrier: "Carrier required for sand; leave stroller at boardwalk.", packingList: ["Sunscreen", "Sun Hats", "Swimwear & Towels", "Wet Bag", "Baby Carrier"] },
                             gfEats: [
-                                { name: "Copacabana", mapLink: "https://www.google.com/maps/search/?api=1&query=Copacabana+Scheveningen", type: "Beach Club", note: "Great GF menu options and clean kitchen protocols." },
-                                { name: "Beachclub WOW", mapLink: "https://www.google.com/maps/search/?api=1&query=Beachclub+WOW+Scheveningen", type: "Beach Club", note: "Safe salads and clear allergen menu available." }
+                                { name: "Copacabana", lat: 52.1130, lng: 4.2760, mapLink: "https://www.google.com/maps/search/?api=1&query=Copacabana+Scheveningen", type: "Beach Club", note: "Great GF menu options and clean kitchen protocols." },
+                                { name: "Beachclub WOW", lat: 52.1180, lng: 4.2810, mapLink: "https://www.google.com/maps/search/?api=1&query=Beachclub+WOW+Scheveningen", type: "Beach Club", note: "Safe salads and clear allergen menu available." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Naturalis Biodiversity",
+                            type: "Action", title: "Naturalis Biodiversity", lat: 52.1643, lng: 4.4753,
                             wikiTopics: ["Naturalis_Biodiversity_Center", "Leiden", "Tyrannosaurus", "Triceratops", "Fossil"],
                             tags: ["Indoor Option", "Dinosaurs"], desc: "Escape indoors to this breathtaking, modern biodiversity museum where life-sized dinosaur skeletons will leave the kids in awe. Walk beneath a towering T-Rex and Triceratops, then head to the interactive labs where the little ones can touch real fossils and learn from working scientists. The spacious, ramp-friendly layout makes it a breeze to navigate with a stroller.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Naturalis+Biodiversity+Center+Leiden",
                             logistics: { travelTime: ["20m RV drive", "10m shuttle"], rvAccess: "Park RV at Haagweg parking, take free city shuttle.", strollerOrCarrier: "Stroller highly recommended for large museum floors.", packingList: ["Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Museum Cafe", mapLink: "https://www.google.com/maps/search/?api=1&query=Naturalis+Museum+Cafe+Leiden", type: "Cafe", note: "Allergen matrix available; safe salads and packaged snacks." },
-                                { name: "Oudt Leyden", mapLink: "https://www.google.com/maps/search/?api=1&query=Pancake+House+Oudt+Leyden", type: "Pancakes", note: "Historic house with dedicated gluten-free options." }
+                                { name: "Museum Cafe", lat: 52.1643, lng: 4.4753, mapLink: "https://www.google.com/maps/search/?api=1&query=Naturalis+Museum+Cafe+Leiden", type: "Cafe", note: "Allergen matrix available; safe salads and packaged snacks." },
+                                { name: "Oudt Leyden", lat: 52.1610, lng: 4.4850, mapLink: "https://www.google.com/maps/search/?api=1&query=Pancake+House+Oudt+Leyden", type: "Pancakes", note: "Historic house with dedicated gluten-free options." }
                             ]
                         }
                     }
@@ -219,105 +287,105 @@
             },
             {
                 id: "camp2", shortName: "North Brabant", title: "Base Camp 2: Fairy Tale Hub",
-                campSite: { name: "Beekse Bergen Resort", mapLink: "https://www.google.com/maps/search/?api=1&query=Beekse+Bergen+Safari+Resort+Hilvarenbeek" },
+                campSite: { name: "Beekse Bergen Resort", mapLink: "https://www.google.com/maps/search/?api=1&query=Beekse+Bergen+Safari+Resort", lat: 51.5273, lng: 5.1206 },
                 days: [
                     {
                         dayLabel: "Day 4", globalIndex: 3,
                         optionA: {
-                            type: "Nature", title: "Loonse & Drunense Duinen",
+                            type: "Nature", title: "Loonse & Drunense Duinen", lat: 51.6420, lng: 5.1110,
                             wikiTopics: ["Loonse_en_Drunense_Duinen", "Sand_dune", "North_Brabant", "Heath", "Forest"],
                             tags: ["Wilderness", "Running Free"], desc: "Venture into the 'Sahara of Brabant,' a massive expanse of inland sand dunes surrounded by dense pine forests. Leave the stroller behind and strap on the baby carrier as the older kids run completely free, rolling down giant hills of soft sand and building woodland forts. It’s an unplugged, wild nature day perfect for an epic family picnic and endless free play.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Loonse+en+Drunense+Duinen+Nationaal+Park",
                             logistics: { travelTime: ["35m RV drive", "5m walk"], rvAccess: "Drive RV to Bosch en Duin parking lot.", strollerOrCarrier: "Baby carrier REQUIRED. Strollers will sink in sand.", packingList: ["Sunscreen", "Walking Shoes", "Baby Carrier", "Picnic Lunch"] },
                             gfEats: [
-                                { name: "De Rustende Jager", mapLink: "https://www.google.com/maps/search/?api=1&query=De+Rustende+Jager+Biezenmortel", type: "Cafe", note: "Fries cooked in dedicated oil, safe hot chocolate." },
-                                { name: "Brasserie Bosch en Duin", mapLink: "https://www.google.com/maps/search/?api=1&query=Brasserie+Bosch+en+Duin+Udenhout", type: "Restaurant", note: "Clear allergen markings for hearty Dutch meals." }
+                                { name: "De Rustende Jager", lat: 51.6440, lng: 5.1130, mapLink: "https://www.google.com/maps/search/?api=1&query=De+Rustende+Jager+Biezenmortel", type: "Cafe", note: "Fries cooked in dedicated oil, safe hot chocolate." },
+                                { name: "Brasserie Bosch en Duin", lat: 51.6400, lng: 5.1090, mapLink: "https://www.google.com/maps/search/?api=1&query=Brasserie+Bosch+en+Duin+Udenhout", type: "Restaurant", note: "Clear allergen markings for hearty Dutch meals." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Efteling Theme Park",
+                            type: "Action", title: "Efteling Theme Park", lat: 51.6499, lng: 5.0489,
                             wikiTopics: ["Efteling", "Fairy_tale", "Kaatsheuvel", "Theme_park", "Dark_ride"],
                             tags: ["Must Do!", "Toddler Rides"], desc: "Enter Europe's most enchanting theme park, deeply rooted in fairy tales and folklore. Spend the morning getting lost in the magical Fairytale Forest, watching talking trees and breathing dragons come to life for the toddler. Later, tackle the incredible dark rides and thrilling coasters like Symbolica and Baron 1898, enjoying the world-class landscaping and immersive storytelling.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Efteling+Theme+Park+Kaatsheuvel",
                             logistics: { travelTime: ["25m RV drive", "10m walk"], rvAccess: "Drive RV to Efteling main parking (special RV area).", strollerOrCarrier: "Stroller essential. Huge park, toddler will need to nap.", packingList: ["Jacket", "Umbrella", "Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Polles Keuken", mapLink: "https://www.google.com/maps/search/?api=1&query=Polles+Keuken+Efteling", type: "Restaurant", note: "Dedicated allergy kitchen workflow. Call ahead." },
-                                { name: "Station de Oost", mapLink: "https://www.google.com/maps/search/?api=1&query=Station+de+Oost+Efteling", type: "Food Court", note: "Safe GF options and strict cross-contamination protocols." }
+                                { name: "Polles Keuken", lat: 51.6510, lng: 5.0490, mapLink: "https://www.google.com/maps/search/?api=1&query=Polles+Keuken+Efteling", type: "Restaurant", note: "Dedicated allergy kitchen workflow. Call ahead." },
+                                { name: "Station de Oost", lat: 51.6485, lng: 5.0510, mapLink: "https://www.google.com/maps/search/?api=1&query=Station+de+Oost+Efteling", type: "Food Court", note: "Safe GF options and strict cross-contamination protocols." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 5", globalIndex: 4,
                         optionA: {
-                            type: "Nature", title: "Biesbosch National Park",
+                            type: "Nature", title: "Biesbosch National Park", lat: 51.7610, lng: 4.7780,
                             wikiTopics: ["Biesbosch_National_Park", "Wetland", "Beaver", "Meuse", "River_delta"],
                             tags: ["Wildlife", "Boat Trip"], desc: "Navigate Europe's largest freshwater tidal wetland by renting a whisper-quiet electric boat or taking a guided cruise. The kids can use binoculars to spot wild beavers, rare birds, and unique flora hiding among the maze of rivers and willow islands. Afterward, let them loose on the nature playgrounds built from natural wood and ropes near the visitor center.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Nationaal+Park+De+Biesbosch",
                             logistics: { travelTime: ["50m RV drive"], rvAccess: "Drive RV directly to Biesboschcentrum Dordrecht.", strollerOrCarrier: "Carrier recommended for boat safety.", packingList: ["Jacket", "Baby Carrier", "Bug Spray"] },
                             gfEats: [
-                                { name: "MuseumEiland", mapLink: "https://www.google.com/maps/search/?api=1&query=MuseumEiland+Biesbosch", type: "Cafe", note: "Offers pre-packaged GF snacks and safe drinks." },
-                                { name: "De Merwelanden", mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Merwelanden+Dordrecht", type: "Restaurant", note: "Solid allergy awareness on main menu items." }
+                                { name: "MuseumEiland", lat: 51.7620, lng: 4.7770, mapLink: "https://www.google.com/maps/search/?api=1&query=MuseumEiland+Biesbosch", type: "Cafe", note: "Offers pre-packaged GF snacks and safe drinks." },
+                                { name: "De Merwelanden", lat: 51.7650, lng: 4.7720, mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Merwelanden+Dordrecht", type: "Restaurant", note: "Solid allergy awareness on main menu items." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Safaripark Beekse Bergen",
+                            type: "Action", title: "Safaripark Beekse Bergen", lat: 51.5260, lng: 5.1220,
                             wikiTopics: ["Safaripark_Beekse_Bergen", "Safari", "Giraffe", "Rhinoceros", "Lion"],
                             tags: ["RV Friendly", "Animals"], desc: "Drive your own RV straight into the African savanna! The whole family can safely watch from the large RV windows as giraffes, zebras, and rhinos walk right up to your vehicle. After the driving route, park the rig and take the walking safari and boat cruise to see cheetahs, elephants, and monkeys up close in their massive, naturalistic habitats.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Safaripark+Beekse+Bergen",
                             logistics: { travelTime: ["15m walk from pitch"], rvAccess: "Walk from camp or drive RV straight onto the car-safari path.", strollerOrCarrier: "None needed for car-safari; stroller for walking route.", packingList: ["Stroller", "Sunscreen"] },
                             gfEats: [
-                                { name: "Safari Restaurant", mapLink: "https://www.google.com/maps/search/?api=1&query=Safari+Restaurant+Beekse+Bergen", type: "Restaurant", note: "Has a specific allergen menu; ask chef directly." },
-                                { name: "Restaurant Kongo", mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+Kongo+Beekse+Bergen", type: "Restaurant", note: "Dedicated fryers available upon request." }
+                                { name: "Safari Restaurant", lat: 51.5265, lng: 5.1235, mapLink: "https://www.google.com/maps/search/?api=1&query=Safari+Restaurant+Beekse+Bergen", type: "Restaurant", note: "Has a specific allergen menu; ask chef directly." },
+                                { name: "Restaurant Kongo", lat: 51.5245, lng: 5.1210, mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+Kongo+Beekse+Bergen", type: "Restaurant", note: "Dedicated fryers available upon request." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 6", globalIndex: 5,
                         optionA: {
-                            type: "Nature", title: "Oisterwijk Forests & Fens",
+                            type: "Nature", title: "Oisterwijk Forests & Fens", lat: 51.5720, lng: 5.2050,
                             wikiTopics: ["Oisterwijk", "Fen", "Nature_reserve", "Pinetum", "North_Brabant"],
                             tags: ["Forest Walks", "Scenic"], desc: "Enjoy a tranquil, shaded morning walking the flat, dirt paths that loop around dozens of hidden forest fens (small lakes). The towering ancient oaks and peaceful water views provide a calming sensory reset for the whole family. Keep an eye out for woodpeckers and frogs before stopping at a rustic woodland cafe for a well-deserved hot chocolate.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Oisterwijkse+Bossen+en+Vennen",
                             logistics: { travelTime: ["20m RV drive"], rvAccess: "Drive RV to Bezoekerscentrum Oisterwijk.", strollerOrCarrier: "All-terrain stroller or carrier.", packingList: ["Walking Shoes", "Bug Spray", "Stroller"] },
                             gfEats: [
-                                { name: "Boshuys", mapLink: "https://www.google.com/maps/search/?api=1&query=Boshuys+Oisterwijk", type: "Cafe", note: "Rustic cafe near the woods with GF bread options." },
-                                { name: "Groot Speijck", mapLink: "https://www.google.com/maps/search/?api=1&query=Groot+Speijck+Oisterwijk", type: "Restaurant", note: "Clear allergen labeling and fresh healthy options." }
+                                { name: "Boshuys", lat: 51.5730, lng: 5.2060, mapLink: "https://www.google.com/maps/search/?api=1&query=Boshuys+Oisterwijk", type: "Cafe", note: "Rustic cafe near the woods with GF bread options." },
+                                { name: "Groot Speijck", lat: 51.5705, lng: 5.2025, mapLink: "https://www.google.com/maps/search/?api=1&query=Groot+Speijck+Oisterwijk", type: "Restaurant", note: "Clear allergen labeling and fresh healthy options." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Speelland Beekse Bergen",
+                            type: "Action", title: "Speelland Beekse Bergen", lat: 51.5300, lng: 5.1250,
                             wikiTopics: ["Playground", "Pedalo", "Water_slide", "Recreation", "Beach_volleyball"],
                             tags: ["Beach Play", "Water Slides"], desc: "Hop on the resort's shuttle boat and cruise over to this massive lakeside playground. The older kids can ride the aquashuttles, bounce on giant trampolines, and splash down the water slides, while the toddler plays safely in the shallow sandy beach waters. It's a high-energy, wet-and-wild day perfectly designed for exhausting the little ones.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Speelland+Beekse+Bergen",
                             logistics: { travelTime: ["10m resort shuttle boat"], rvAccess: "Take the internal resort shuttle boat or walk.", strollerOrCarrier: "Carrier for the beach area.", packingList: ["Swimwear & Towels", "Water Shoes", "Wet Bag", "Sunscreen"] },
                             gfEats: [
-                                { name: "Speelland Snack Bar", mapLink: "https://www.google.com/maps/search/?api=1&query=Speelland+Beekse+Bergen", type: "Quick Bite", note: "Dedicated fryer for GF fries." },
-                                { name: "Wapen van Beekse Bergen", mapLink: "https://www.google.com/maps/search/?api=1&query=Wapen+van+Beekse+Bergen", type: "Restaurant", note: "Safe seated dining just outside the park gates." }
+                                { name: "Speelland Snack Bar", lat: 51.5310, lng: 5.1260, mapLink: "https://www.google.com/maps/search/?api=1&query=Speelland+Beekse+Bergen", type: "Quick Bite", note: "Dedicated fryer for GF fries." },
+                                { name: "Wapen van Beekse Bergen", lat: 51.5330, lng: 5.1280, mapLink: "https://www.google.com/maps/search/?api=1&query=Wapen+van+Beekse+Bergen", type: "Restaurant", note: "Safe seated dining just outside the park gates." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 7", globalIndex: 6,
                         optionA: {
-                            type: "Nature", title: "Kampina Nature Reserve",
+                            type: "Nature", title: "Kampina Nature Reserve", lat: 51.5710, lng: 5.2590,
                             wikiTopics: ["Kampina", "Moorland", "Pony", "Cattle", "Hiking"],
                             tags: ["Peaceful", "Wildlife"], desc: "Take a serene hike through the sprawling purple heathlands and dense forests of the Kampina reserve. The flat, wide trails are easy to navigate and offer the exciting chance to spot herds of wild horses and grazing cattle roaming completely free. It’s a quiet, beautiful escape where the kids can collect pinecones and learn about the local ecosystem.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Kampina+Nature+Reserve",
                             logistics: { travelTime: ["30m RV drive"], rvAccess: "Drive RV to Roond parking area.", strollerOrCarrier: "Stroller friendly on main paths, carrier for deep trails.", packingList: ["Walking Shoes", "Jacket", "Stroller", "Picnic Lunch"] },
                             gfEats: [
-                                { name: "De Roestelberg", mapLink: "https://www.google.com/maps/search/?api=1&query=De+Roestelberg+Kaatsheuvel", type: "Restaurant", note: "Good allergen awareness, offers GF pancakes." },
-                                { name: "Boshuys Hermitage", mapLink: "https://www.google.com/maps/search/?api=1&query=Boshuys+Hermitage+Oisterwijk", type: "Cafe", note: "Nice terrace serving safe soups and salads." }
+                                { name: "De Roestelberg", lat: 51.5750, lng: 5.2650, mapLink: "https://www.google.com/maps/search/?api=1&query=De+Roestelberg+Kaatsheuvel", type: "Restaurant", note: "Good allergen awareness, offers GF pancakes." },
+                                { name: "Boshuys Hermitage", lat: 51.5680, lng: 5.2520, mapLink: "https://www.google.com/maps/search/?api=1&query=Boshuys+Hermitage+Oisterwijk", type: "Cafe", note: "Nice terrace serving safe soups and salads." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "TextielMuseum",
+                            type: "Action", title: "TextielMuseum", lat: 51.5640, lng: 5.0820,
                             wikiTopics: ["TextielMuseum", "Tilburg", "Textile_manufacturing", "Weaving", "Loom"],
                             tags: ["Indoor", "Interactive"], desc: "Step into a fully functioning, historic textile factory that has been transformed into an interactive museum. The kids will be mesmerized by the sheer scale and roaring sounds of the massive industrial weaving looms turning colorful threads into giant tapestries. Hands-on exhibits let them experiment with fabrics, colors, and design in a surprisingly engaging indoor environment.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=TextielMuseum+Tilburg",
                             logistics: { travelTime: ["15m RV drive", "10m bus"], rvAccess: "Drive RV to Tilburg P+R Stappegoor, take bus 1.", strollerOrCarrier: "Stroller recommended for the large factory floors.", packingList: ["Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "TextielCafé", mapLink: "https://www.google.com/maps/search/?api=1&query=TextielMuseum+Tilburg", type: "Cafe", note: "GF cakes and safe beverages available." },
-                                { name: "RAW Tilburg", mapLink: "https://www.google.com/maps/search/?api=1&query=RAW+Tilburg", type: "Restaurant", note: "Trendy spot nearby with clear allergen menus." }
+                                { name: "TextielCafé", lat: 51.5642, lng: 5.0822, mapLink: "https://www.google.com/maps/search/?api=1&query=TextielMuseum+Tilburg", type: "Cafe", note: "GF cakes and safe beverages available." },
+                                { name: "RAW Tilburg", lat: 51.5600, lng: 5.0850, mapLink: "https://www.google.com/maps/search/?api=1&query=RAW+Tilburg", type: "Restaurant", note: "Trendy spot nearby with clear allergen menus." }
                             ]
                         }
                     }
@@ -325,105 +393,105 @@
             },
             {
                 id: "camp3", shortName: "Eifel (DE)", title: "Base Camp 3: Eifel Park",
-                campSite: { name: "Rursee Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Wohnmobilpark+Rursee" },
+                campSite: { name: "Rursee Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Wohnmobilpark+Rursee", lat: 50.6094, lng: 6.3860 },
                 days: [
                     {
                         dayLabel: "Day 8", globalIndex: 7,
                         optionA: {
-                            type: "Nature", title: "Rursee Lake Hike",
+                            type: "Nature", title: "Rursee Lake Hike", lat: 50.6120, lng: 6.3910,
                             wikiTopics: ["Rursee", "Eifel", "Reservoir", "Dam", "North_Rhine-Westphalia"],
                             tags: ["Easy Hike", "Picnic"], desc: "Breathe in the crisp, alpine-style air as you hike the gentle, forested trails wrapping around the emerald-green waters of the Rursee reservoir. After a scenic morning walk, board a quiet electric passenger boat for a relaxing cruise across the lake, giving your legs a rest while you take in the stunning, panoramic views of the Eifel mountains.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Rursee+Eifel",
                             logistics: { travelTime: ["0m drive (Walk)"], rvAccess: "Walk directly from the Wohnmobilpark.", strollerOrCarrier: "Stroller friendly along the lake promenades.", packingList: ["Walking Shoes", "Picnic Lunch", "Jacket", "Stroller"] },
                             gfEats: [
-                                { name: "Rewe Simmerath", mapLink: "https://www.google.com/maps/search/?api=1&query=Rewe+Simmerath", type: "Grocery", note: "Massive 'Glutenfrei' sections for stocking the RV." },
-                                { name: "Café am Rursee", mapLink: "https://www.google.com/maps/search/?api=1&query=Cafe+am+Rursee", type: "Cafe", note: "Scenic views, occasionally stocks certified GF cakes." }
+                                { name: "Rewe Simmerath", lat: 50.6050, lng: 6.3020, mapLink: "https://www.google.com/maps/search/?api=1&query=Rewe+Simmerath", type: "Grocery", note: "Massive 'Glutenfrei' sections for stocking the RV." },
+                                { name: "Café am Rursee", lat: 50.6150, lng: 6.3880, mapLink: "https://www.google.com/maps/search/?api=1&query=Cafe+am+Rursee", type: "Cafe", note: "Scenic views, occasionally stocks certified GF cakes." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Phantasialand",
+                            type: "Action", title: "Phantasialand", lat: 50.8000, lng: 6.8800,
                             wikiTopics: ["Phantasialand", "Brühl", "Roller_coaster", "Log_flume", "Amusement_ride"],
                             tags: ["Thrill Rides", "Themed"], desc: "Dive into incredibly detailed, immersive fantasy worlds at one of Europe's top theme parks. The older kids can brave world-record-breaking roller coasters like Taron and F.L.Y., while the toddler explores the deeply themed interactive play areas. Even if it rains, the park’s massive indoor attractions and covered walkways keep the action going all day long.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Phantasialand+Bruhl",
                             logistics: { travelTime: ["1h RV drive"], rvAccess: "Drive RV to Phantasialand (RV parking P3).", strollerOrCarrier: "Stroller essential for the long day.", packingList: ["Jacket", "Umbrella", "Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Rutmor's Taverne", mapLink: "https://www.google.com/maps/search/?api=1&query=Rutmors+Taverne+Phantasialand", type: "Restaurant", note: "Ask for the allergen matrix. Well-trained staff." },
-                                { name: "Uhrwerk Restaurant", mapLink: "https://www.google.com/maps/search/?api=1&query=Uhrwerk+Restaurant+Phantasialand", type: "Restaurant", note: "Upscale park dining with custom GF preparation." }
+                                { name: "Rutmor's Taverne", lat: 50.8010, lng: 6.8810, mapLink: "https://www.google.com/maps/search/?api=1&query=Rutmors+Taverne+Phantasialand", type: "Restaurant", note: "Ask for the allergen matrix. Well-trained staff." },
+                                { name: "Uhrwerk Restaurant", lat: 50.8020, lng: 6.8790, mapLink: "https://www.google.com/maps/search/?api=1&query=Uhrwerk+Restaurant+Phantasialand", type: "Restaurant", note: "Upscale park dining with custom GF preparation." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 9", globalIndex: 8,
                         optionA: {
-                            type: "Nature", title: "Eifel National Park",
+                            type: "Nature", title: "Eifel National Park", lat: 50.6000, lng: 6.4500,
                             wikiTopics: ["Eifel_National_Park", "National_park", "Beech", "Dark-sky_preserve", "Wildcat"],
                             tags: ["Wilderness", "Dark Sky"], desc: "Head deep into the 'wild heart' of Germany to explore sprawling beech forests and ancient volcanic landscapes. Follow the family-friendly ranger trails where kids can track wildcats and learn about the park's dark-sky preservation. The rugged terrain feels like a true wilderness adventure, making it a great day for sturdy boots and the baby carrier.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Eifel+National+Park",
                             logistics: { travelTime: ["25m RV drive"], rvAccess: "Drive RV to Nationalpark-Zentrum Eifel.", strollerOrCarrier: "Carrier recommended for deeper forest trails.", packingList: ["Walking Shoes", "Jacket", "Baby Carrier"] },
                             gfEats: [
-                                { name: "Nationalpark Cafe", mapLink: "https://www.google.com/maps/search/?api=1&query=Nationalpark-Zentrum+Eifel", type: "Cafe", note: "Clear allergen labeling on menus for safe snacking." },
-                                { name: "Klosterschänke", mapLink: "https://www.google.com/maps/search/?api=1&query=Klosterschanke+Heimbach", type: "Restaurant", note: "Traditional German fare with GF modifications available." }
+                                { name: "Nationalpark Cafe", lat: 50.6010, lng: 6.4520, mapLink: "https://www.google.com/maps/search/?api=1&query=Nationalpark-Zentrum+Eifel", type: "Cafe", note: "Clear allergen labeling on menus for safe snacking." },
+                                { name: "Klosterschänke", lat: 50.6300, lng: 6.4800, mapLink: "https://www.google.com/maps/search/?api=1&query=Klosterschanke+Heimbach", type: "Restaurant", note: "Traditional German fare with GF modifications available." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Monschau Timber Town",
+                            type: "Action", title: "Monschau Timber Town", lat: 50.5550, lng: 6.2400,
                             wikiTopics: ["Monschau", "Half-timbered_house", "Rur", "Eifel_Mountains", "Castle"],
                             tags: ["Picturesque", "Stroll"], desc: "Stroll through the cobblestone streets of this unbelievably picturesque medieval timber-framed town. The kids can peer over the stone bridges to watch the Rur river rush right through the town center. Grab a coffee, explore the historic mustard mill, and soak in the storybook atmosphere as you weave through the narrow, winding alleyways.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Monschau+Germany",
                             logistics: { travelTime: ["40m RV drive", "10m shuttle"], rvAccess: "Park RV at Burgau parking outside town, take shuttle.", strollerOrCarrier: "Carrier recommended (cobblestones are tough on strollers).", packingList: ["Umbrella", "Jacket", "Baby Carrier"] },
                             gfEats: [
-                                { name: "Café Kaulard", mapLink: "https://www.google.com/maps/search/?api=1&query=Cafe+Kaulard+Monschau", type: "Cafe", note: "Usually has safe GF cake options. Verify with staff." },
-                                { name: "Lütticher Hof", mapLink: "https://www.google.com/maps/search/?api=1&query=Lutticher+Hof+Monschau", type: "Restaurant", note: "Accommodating chefs can prepare safe grilled meats." }
+                                { name: "Café Kaulard", lat: 50.5560, lng: 6.2410, mapLink: "https://www.google.com/maps/search/?api=1&query=Cafe+Kaulard+Monschau", type: "Cafe", note: "Usually has safe GF cake options. Verify with staff." },
+                                { name: "Lütticher Hof", lat: 50.5540, lng: 6.2390, mapLink: "https://www.google.com/maps/search/?api=1&query=Lutticher+Hof+Monschau", type: "Restaurant", note: "Accommodating chefs can prepare safe grilled meats." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 10", globalIndex: 9,
                         optionA: {
-                            type: "Nature", title: "Teufelsschlucht",
+                            type: "Nature", title: "Teufelsschlucht", lat: 49.8400, lng: 6.4350,
                             wikiTopics: ["Irrel_Waterfalls", "Gorge", "Sandstone", "Rhineland-Palatinate", "Geology"],
                             tags: ["Geology", "Adventure Walk"], desc: "Gear up for an Indiana Jones-style adventure as you hike through the 'Devil's Gorge.' The kids will be thrilled squeezing through massive, 30-meter-high sandstone crevices and navigating the mossy, rocky steps of this dramatic geological wonderland. It’s a highly active, rugged trail where a baby carrier is strictly required.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Teufelsschlucht+Ernzen",
                             logistics: { travelTime: ["1h 10m RV drive"], rvAccess: "Drive RV to Naturparkzentrum Teufelsschlucht.", strollerOrCarrier: "Carrier REQUIRED. Very tight rock formations and stairs.", packingList: ["Walking Shoes", "Baby Carrier", "Jacket"] },
                             gfEats: [
-                                { name: "Gorge Kiosk", mapLink: "https://www.google.com/maps/search/?api=1&query=Teufelsschlucht+Kiosk", type: "Snack Stand", note: "Pack a safe GF lunch; options here are limited." },
-                                { name: "Ernzen Diner", mapLink: "https://www.google.com/maps/search/?api=1&query=Ernzen+Restaurant", type: "Restaurant", note: "A short drive from the gorge, good allergy protocols." }
+                                { name: "Gorge Kiosk", lat: 49.8410, lng: 6.4360, mapLink: "https://www.google.com/maps/search/?api=1&query=Teufelsschlucht+Kiosk", type: "Snack Stand", note: "Pack a safe GF lunch; options here are limited." },
+                                { name: "Ernzen Diner", lat: 49.8350, lng: 6.4250, mapLink: "https://www.google.com/maps/search/?api=1&query=Ernzen+Restaurant", type: "Restaurant", note: "A short drive from the gorge, good allergy protocols." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Eifelpark Gondorf",
+                            type: "Action", title: "Eifelpark Gondorf", lat: 49.9720, lng: 6.6180,
                             wikiTopics: ["Eifelpark", "Gondorf", "Summer_toboggan", "Brown_bear", "Wolf"],
                             tags: ["Wildlife", "Coasters"], desc: "Enjoy the perfect hybrid of a sprawling wildlife park and a retro amusement park. Ride the thrilling summer alpine coaster down the mountain, take a spin on the family drop towers, and then walk the forest paths to feed deer and observe brown bears and wolves. It offers a great mix of animal encounters and fairground fun.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Eifelpark+Gondorf",
                             logistics: { travelTime: ["1h 5m RV drive"], rvAccess: "Drive RV directly to park entrance.", strollerOrCarrier: "All-terrain stroller or carrier.", packingList: ["Walking Shoes", "Sunscreen", "Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Park Kiosk", mapLink: "https://www.google.com/maps/search/?api=1&query=Eifelpark+Gondorf", type: "Quick Bite", note: "Fries are generally safe, but packing food is advised." },
-                                { name: "Restaurant Eifelstube", mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+Eifelstube", type: "Restaurant", note: "Dine-in location with clearly marked allergens." }
+                                { name: "Park Kiosk", lat: 49.9730, lng: 6.6190, mapLink: "https://www.google.com/maps/search/?api=1&query=Eifelpark+Gondorf", type: "Quick Bite", note: "Fries are generally safe, but packing food is advised." },
+                                { name: "Restaurant Eifelstube", lat: 49.9700, lng: 6.6150, mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+Eifelstube", type: "Restaurant", note: "Dine-in location with clearly marked allergens." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 11", globalIndex: 10,
                         optionA: {
-                            type: "Nature", title: "Hohes Venn Boardwalks",
+                            type: "Nature", title: "Hohes Venn Boardwalks", lat: 50.5000, lng: 6.1000,
                             wikiTopics: ["High_Fens", "Moorland", "Bog", "Boardwalk", "Ardennes"],
                             tags: ["Unique Landscape", "Boardwalks"], desc: "Walk on water across Europe's largest high moorland using an extensive network of raised wooden boardwalks. The unique, boggy landscape feels like stepping onto another planet, filled with rare plants and eerie mists. It's a visually stunning, easy walk, but you'll need the baby carrier as the wooden planks can be too narrow for a double stroller.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=High+Fens+Botrange",
                             logistics: { travelTime: ["45m RV drive"], rvAccess: "Drive RV to Signal de Botrange parking.", strollerOrCarrier: "Carrier recommended, boardwalks can be narrow.", packingList: ["Walking Shoes", "Jacket", "Baby Carrier"] },
                             gfEats: [
-                                { name: "Botrange Cafe", mapLink: "https://www.google.com/maps/search/?api=1&query=Signal+de+Botrange", type: "Cafe", note: "Basic cafe. Advised to pack safe GF snacks." },
-                                { name: "Mont Rigi", mapLink: "https://www.google.com/maps/search/?api=1&query=Mont+Rigi+Restaurant", type: "Restaurant", note: "Upscale cabin dining with GF soup and salad options." }
+                                { name: "Botrange Cafe", lat: 50.5010, lng: 6.1010, mapLink: "https://www.google.com/maps/search/?api=1&query=Signal+de+Botrange", type: "Cafe", note: "Basic cafe. Advised to pack safe GF snacks." },
+                                { name: "Mont Rigi", lat: 50.5100, lng: 6.0800, mapLink: "https://www.google.com/maps/search/?api=1&query=Mont+Rigi+Restaurant", type: "Restaurant", note: "Upscale cabin dining with GF soup and salad options." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Chocolate Museum",
+                            type: "Action", title: "Chocolate Museum", lat: 50.9320, lng: 6.9640,
                             wikiTopics: ["Imhoff-Schokoladenmuseum", "Cologne", "Chocolate", "Theobroma_cacao", "Rhine"],
                             tags: ["City Trip", "Sweet"], desc: "Escape the weather and follow your sweet tooth to this futuristic museum sitting on a peninsula in the Rhine river. Learn the entire journey of the cocoa bean from the tropical greenhouse to the modern factory floor. The highlight for the kids is undoubtedly the massive, golden chocolate fountain where they can taste freshly made, warm Lindt chocolate.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Chocolate+Museum+Cologne",
                             logistics: { travelTime: ["50m RV drive", "20m tram"], rvAccess: "Park RV at P+R Köln Süd, take tram 16 to city center.", strollerOrCarrier: "Stroller friendly throughout the museum.", packingList: ["Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Chocolat Café", mapLink: "https://www.google.com/maps/search/?api=1&query=Chocolate+Museum+Cologne", type: "Cafe", note: "Offers GF cakes and pure chocolate options." },
-                                { name: "Vapiano Cologne", mapLink: "https://www.google.com/maps/search/?api=1&query=Vapiano+Cologne", type: "Italian", note: "Chain known for strict GF pasta and pizza protocols." }
+                                { name: "Chocolat Café", lat: 50.9322, lng: 6.9645, mapLink: "https://www.google.com/maps/search/?api=1&query=Chocolate+Museum+Cologne", type: "Cafe", note: "Offers GF cakes and pure chocolate options." },
+                                { name: "Vapiano Cologne", lat: 50.9350, lng: 6.9550, mapLink: "https://www.google.com/maps/search/?api=1&query=Vapiano+Cologne", type: "Italian", note: "Chain known for strict GF pasta and pizza protocols." }
                             ]
                         }
                     }
@@ -431,80 +499,80 @@
             },
             {
                 id: "camp4", shortName: "Gelderland", title: "Base Camp 4: Green Heart",
-                campSite: { name: "Arnhem Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Camping+Arnhem" },
+                campSite: { name: "Arnhem Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Camping+Arnhem", lat: 52.0116, lng: 5.9044 },
                 days: [
                     {
                         dayLabel: "Day 12", globalIndex: 11,
                         optionA: {
-                            type: "Nature", title: "Hoge Veluwe 'White Bikes'",
+                            type: "Nature", title: "Hoge Veluwe 'White Bikes'", lat: 52.0900, lng: 5.8200,
                             wikiTopics: ["Hoge_Veluwe_National_Park", "Kröller-Müller_Museum", "Bicycle", "Veluwe", "Red_deer"],
                             tags: ["Cycling", "Art & Nature"], desc: "Grab a free, iconic 'White Bike' (complete with child seats) and pedal your way through an ever-changing landscape of blooming purple heather, dense woodlands, and shifting sand drifts. Park your bikes at the world-renowned Kröller-Müller Museum to explore the outdoor sculpture garden, and keep your eyes peeled for wild red deer and wild boars along the cycling paths.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Hoge+Veluwe+National+Park",
                             logistics: { travelTime: ["20m RV drive"], rvAccess: "Drive RV to Hoenderloo entrance parking.", strollerOrCarrier: "Carrier recommended while biking, or use bike child seats.", packingList: ["Jacket", "Baby Carrier", "Picnic Lunch"] },
                             gfEats: [
-                                { name: "Park Restaurant", mapLink: "https://www.google.com/maps/search/?api=1&query=Park+Restaurant+Hoge+Veluwe", type: "Restaurant", note: "Excellent GF options and clear cross-contamination protocols." },
-                                { name: "De Boerderij", mapLink: "https://www.google.com/maps/search/?api=1&query=Pannenkoekenhuis+Arnhem", type: "Pancakes", note: "Dedicated gluten-free pancake batter available." }
+                                { name: "Park Restaurant", lat: 52.0910, lng: 5.8220, mapLink: "https://www.google.com/maps/search/?api=1&query=Park+Restaurant+Hoge+Veluwe", type: "Restaurant", note: "Excellent GF options and clear cross-contamination protocols." },
+                                { name: "De Boerderij", lat: 52.0950, lng: 5.8150, mapLink: "https://www.google.com/maps/search/?api=1&query=Pannenkoekenhuis+Arnhem", type: "Pancakes", note: "Dedicated gluten-free pancake batter available." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Burgers' Zoo",
+                            type: "Action", title: "Burgers' Zoo", lat: 52.0080, lng: 5.8820,
                             wikiTopics: ["Burgers'_Zoo", "Arnhem", "Zoo", "Tropical_rainforest", "Coral_reef"],
                             tags: ["Eco-Domes", "World Class"], desc: "Experience a zoo unlike any other by trekking through massive, climate-controlled eco-domes. Walk through the humid tropical rainforest, descend into the arid desert, and explore the sprawling indoor ocean reef aquarium. It’s a phenomenal, world-class immersive experience that allows the kids to see exotic wildlife thriving in incredibly authentic, large-scale habitats.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Burgers+Zoo+Arnhem",
                             logistics: { travelTime: ["15m RV drive"], rvAccess: "Drive RV directly to zoo parking.", strollerOrCarrier: "Stroller highly recommended for the huge park.", packingList: ["Stroller", "Euro Coins"] },
                             gfEats: [
-                                { name: "Safari Centre", mapLink: "https://www.google.com/maps/search/?api=1&query=Burgers+Zoo+Arnhem", type: "Restaurant", note: "Strict allergen protocol, can prepare safe hot meals." },
-                                { name: "Park Restaurant", mapLink: "https://www.google.com/maps/search/?api=1&query=Park+Restaurant+Burgers+Zoo", type: "Food Court", note: "Safely packaged GF salads and fruit bowls." }
+                                { name: "Safari Centre", lat: 52.0085, lng: 5.8830, mapLink: "https://www.google.com/maps/search/?api=1&query=Burgers+Zoo+Arnhem", type: "Restaurant", note: "Strict allergen protocol, can prepare safe hot meals." },
+                                { name: "Park Restaurant", lat: 52.0070, lng: 5.8810, mapLink: "https://www.google.com/maps/search/?api=1&query=Park+Restaurant+Burgers+Zoo", type: "Food Court", note: "Safely packaged GF salads and fruit bowls." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 13", globalIndex: 12,
                         optionA: {
-                            type: "Nature", title: "Veluwezoom & Posbank",
+                            type: "Nature", title: "Veluwezoom & Posbank", lat: 52.0300, lng: 6.0200,
                             wikiTopics: ["Veluwezoom_National_Park", "Posbank", "Calluna", "Moraine", "Overijssel"],
                             tags: ["Scenic Views", "Bloom"], desc: "Drive up to the famous Posbank viewpoint for a spectacular panoramic view over the rolling moraine hills. In late August, the landscape explodes into a vibrant, endless carpet of purple heather. Hike the winding dirt trails, snap breathtaking family photos, and let the kids run freely across the hills before stopping at the pavilion for a scenic lunch.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Posbank+Rheden",
                             logistics: { travelTime: ["25m RV drive"], rvAccess: "Drive RV to Posbank visitor center.", strollerOrCarrier: "All-terrain stroller or carrier for trails.", packingList: ["Walking Shoes", "Sunscreen", "Stroller", "Picnic Lunch"] },
                             gfEats: [
-                                { name: "Paviljoen de Posbank", mapLink: "https://www.google.com/maps/search/?api=1&query=Paviljoen+de+Posbank+Rheden", type: "Cafe", note: "Beautiful views with GF cake options and safe ice creams." },
-                                { name: "Brasserie Veluwezoom", mapLink: "https://www.google.com/maps/search/?api=1&query=Brasserie+Veluwezoom", type: "Restaurant", note: "Excellent hearty meals with an allergen matrix." }
+                                { name: "Paviljoen de Posbank", lat: 52.0310, lng: 6.0220, mapLink: "https://www.google.com/maps/search/?api=1&query=Paviljoen+de+Posbank+Rheden", type: "Cafe", note: "Beautiful views with GF cake options and safe ice creams." },
+                                { name: "Brasserie Veluwezoom", lat: 52.0250, lng: 6.0150, mapLink: "https://www.google.com/maps/search/?api=1&query=Brasserie+Veluwezoom", type: "Restaurant", note: "Excellent hearty meals with an allergen matrix." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Open Air Museum",
+                            type: "Action", title: "Open Air Museum", lat: 52.0120, lng: 5.9100,
                             wikiTopics: ["Netherlands_Open_Air_Museum", "Tram", "Windmill", "Open-air_museum", "History_of_the_Netherlands"],
                             tags: ["History", "Interactive"], desc: "Step directly into Dutch history at this sprawling 100-acre park. Ride the authentic vintage trams between historic windmills, ancient farmhouses, and traditional workshops. The kids can actively participate by helping to churn butter, pump water, or watch the blacksmith at work, making it an incredibly engaging and educational step back in time.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Netherlands+Open+Air+Museum+Arnhem",
                             logistics: { travelTime: ["10m RV drive"], rvAccess: "Drive RV to museum main parking.", strollerOrCarrier: "Stroller friendly; vintage trams accommodate strollers.", packingList: ["Umbrella", "Jacket", "Stroller"] },
                             gfEats: [
-                                { name: "Canon Café", mapLink: "https://www.google.com/maps/search/?api=1&query=Netherlands+Open+Air+Museum+Arnhem", type: "Cafe", note: "Offers GF soup and bread, double-check cross-contamination." },
-                                { name: "Kasteel Cafe", mapLink: "https://www.google.com/maps/search/?api=1&query=Kasteel+Cafe+Arnhem", type: "Cafe", note: "Upscale historic setting with certified GF options." }
+                                { name: "Canon Café", lat: 52.0125, lng: 5.9110, mapLink: "https://www.google.com/maps/search/?api=1&query=Netherlands+Open+Air+Museum+Arnhem", type: "Cafe", note: "Offers GF soup and bread, double-check cross-contamination." },
+                                { name: "Kasteel Cafe", lat: 52.0100, lng: 5.9080, mapLink: "https://www.google.com/maps/search/?api=1&query=Kasteel+Cafe+Arnhem", type: "Cafe", note: "Upscale historic setting with certified GF options." }
                             ]
                         }
                     },
                     {
                         dayLabel: "Day 14", globalIndex: 13,
                         optionA: {
-                            type: "Nature", title: "Kootwijkerzand",
+                            type: "Nature", title: "Kootwijkerzand", lat: 52.1600, lng: 5.7600,
                             wikiTopics: ["Kootwijkerzand", "Sand_drift", "Veluwe", "Radio_Kootwijk", "Pine"],
                             tags: ["Unique Landscape", "Farewell"], desc: "Conclude your nature adventures at the largest active sand drift in Western Europe. This strange, desert-like expanse in the middle of the forest is perfect for one last day of wild freedom. Let the kids run barefoot down the massive sand dunes and check out the imposing, cathedral-like Radio Kootwijk building sitting dramatically in the middle of the sands.",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Kootwijkerzand+Kootwijk",
                             logistics: { travelTime: ["30m RV drive"], rvAccess: "Drive RV to Kootwijkerzand parking.", strollerOrCarrier: "Carrier REQUIRED for deep sand.", packingList: ["Walking Shoes", "Sunscreen", "Baby Carrier"] },
                             gfEats: [
-                                { name: "Jumbo Supermarket", mapLink: "https://www.google.com/maps/search/?api=1&query=Jumbo+Supermarket+Apeldoorn", type: "Grocery", note: "Stock up on GF Dutch treats to take home!" },
-                                { name: "De Houtzagerij", mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Houtzagerij+Kootwijk", type: "Restaurant", note: "Safe grilled meats near the sand dunes." }
+                                { name: "Jumbo Supermarket", lat: 52.1650, lng: 5.7700, mapLink: "https://www.google.com/maps/search/?api=1&query=Jumbo+Supermarket+Apeldoorn", type: "Grocery", note: "Stock up on GF Dutch treats to take home!" },
+                                { name: "De Houtzagerij", lat: 52.1550, lng: 5.7500, mapLink: "https://www.google.com/maps/search/?api=1&query=Restaurant+De+Houtzagerij+Kootwijk", type: "Restaurant", note: "Safe grilled meats near the sand dunes." }
                             ]
                         },
                         optionB: {
-                            type: "Action", title: "Apenheul Primate Park",
+                            type: "Action", title: "Apenheul Primate Park", lat: 52.2100, lng: 5.9300,
                             wikiTopics: ["Apenheul", "Apeldoorn", "Primate", "Macaque", "Gorilla"],
                             tags: ["Monkeys", "Interactive"], desc: "Wrap up your trip with a truly unique, highly interactive wildlife experience. At this lush forest park, over half of the monkey species roam completely free among the visitors. The kids will be delighted as small squirrel monkeys scurry past their feet or swing on the branches right above their heads. Just remember to secure your bags!",
                             mapLink: "https://www.google.com/maps/search/?api=1&query=Apenheul+Apeldoorn",
                             logistics: { travelTime: ["35m RV drive", "10m shuttle"], rvAccess: "Drive RV to Apeldoorn P+R, take shuttle bus.", strollerOrCarrier: "Stroller friendly, but watch your belongings around monkeys!", packingList: ["Walking Shoes", "Stroller"] },
                             gfEats: [
-                                { name: "Park Restaurants", mapLink: "https://www.google.com/maps/search/?api=1&query=Apenheul+Apeldoorn", type: "Food Courts", note: "Has an allergen map available for safe snacking options." },
-                                { name: "De Echoput", mapLink: "https://www.google.com/maps/search/?api=1&query=De+Echoput+Apeldoorn", type: "Fine Dining", note: "High-end farewell dinner; extremely allergy aware." }
+                                { name: "Park Restaurants", lat: 52.2110, lng: 5.9310, mapLink: "https://www.google.com/maps/search/?api=1&query=Apenheul+Apeldoorn", type: "Food Courts", note: "Has an allergen map available for safe snacking options." },
+                                { name: "De Echoput", lat: 52.2050, lng: 5.9200, mapLink: "https://www.google.com/maps/search/?api=1&query=De+Echoput+Apeldoorn", type: "Fine Dining", note: "High-end farewell dinner; extremely allergy aware." }
                             ]
                         }
                     }
@@ -513,6 +581,7 @@
         ];
 
         let state = {
+            view: 'list', 
             campIndex: 0,
             dayIndex: 0,
             option: 'A',
@@ -521,6 +590,287 @@
         };
         
         let isSyncing = false;
+        let map = null;
+        let mapMarkers = [];
+        let userLocationMarker = null;
+
+        function switchView(newView) {
+            state.view = newView;
+            
+            const tabList = document.getElementById('tab-list');
+            const tabMap = document.getElementById('tab-map');
+            
+            if (newView === 'list') {
+                tabList.className = "flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5";
+                tabMap.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
+                
+                document.getElementById('list-view-container').classList.remove('hidden');
+                document.getElementById('list-view-container').classList.add('flex');
+                document.getElementById('map-view-container').classList.add('hidden');
+                document.getElementById('map-view-container').classList.remove('flex');
+                
+                closeBottomSheet();
+            } else {
+                tabMap.className = "flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5";
+                tabList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
+                
+                document.getElementById('list-view-container').classList.add('hidden');
+                document.getElementById('list-view-container').classList.remove('flex');
+                document.getElementById('map-view-container').classList.remove('hidden');
+                document.getElementById('map-view-container').classList.add('flex');
+                
+                if (!map) {
+                    initMap();
+                } else {
+                    map.invalidateSize();
+                }
+                renderMapMarkers();
+            }
+        }
+
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false 
+            }).setView([52.1458, 4.3820], 9);
+            
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // Replaced Carto with standard, free OpenStreetMap tiles (No API key needed)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Setup Geolocation event listeners
+            map.on('locationfound', function(e) {
+                if (userLocationMarker) {
+                    map.removeLayer(userLocationMarker);
+                }
+                userLocationMarker = L.circleMarker(e.latlng, {
+                    radius: 8,
+                    fillColor: "#3b82f6",
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(map).bindTooltip("You are here", { direction: 'top', offset: [0, -10] }).openTooltip();
+            });
+
+            map.on('locationerror', function(e) {
+                alert("Could not access your location. Please check your browser location permissions.");
+            });
+        }
+
+        function locateUser() {
+            if (!map) return;
+            // Native HTML5 Geolocation triggered through Leaflet
+            map.locate({setView: true, maxZoom: 14});
+        }
+
+        const createMapIcon = (colorClass, faClass) => L.divIcon({
+            html: `<div class="w-8 h-8 rounded-full ${colorClass} text-white flex items-center justify-center shadow-lg border-2 border-white transform transition-transform hover:scale-110"><i class="fa-solid ${faClass}"></i></div>`,
+            className: 'custom-pin',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        });
+
+        function renderMapMarkers() {
+            if (!map) return;
+            
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            const currentCamp = tripData[state.campIndex];
+            const bounds = [];
+
+            if (currentCamp.campSite.lat && currentCamp.campSite.lng) {
+                const marker = L.marker([currentCamp.campSite.lat, currentCamp.campSite.lng], {
+                    icon: createMapIcon('bg-blue-500', 'fa-home')
+                }).addTo(map);
+                marker.bindTooltip("Base Camp", { direction: 'top', offset: [0, -20] });
+                bounds.push([currentCamp.campSite.lat, currentCamp.campSite.lng]);
+                mapMarkers.push(marker);
+            }
+
+            currentCamp.days.forEach((day, dIdx) => {
+                ['optionA', 'optionB'].forEach((optKey) => {
+                    const opt = day[optKey];
+                    const color = optKey === 'optionA' ? 'bg-teal-500' : 'bg-orange-500';
+                    const icon = optKey === 'optionA' ? 'fa-leaf' : 'fa-bolt';
+                    const optionChar = optKey === 'optionA' ? 'A' : 'B';
+
+                    if (opt.lat && opt.lng) {
+                        const marker = L.marker([opt.lat, opt.lng], {
+                            icon: createMapIcon(color, icon)
+                        }).addTo(map);
+                        
+                        marker.on('click', () => {
+                            state.dayIndex = dIdx;
+                            state.option = optionChar;
+                            state.gfEatIndex = 0;
+                            openBottomSheet(opt, optionChar);
+                        });
+                        
+                        bounds.push([opt.lat, opt.lng]);
+                        mapMarkers.push(marker);
+                    }
+
+                    if (opt.gfEats) {
+                        opt.gfEats.forEach((eat, gfIdx) => {
+                            if (eat.lat && eat.lng) {
+                                const marker = L.marker([eat.lat, eat.lng], {
+                                    icon: createMapIcon('bg-purple-500', 'fa-shield-heart')
+                                }).addTo(map);
+                                
+                                marker.on('click', () => {
+                                    state.dayIndex = dIdx;
+                                    state.option = optionChar;
+                                    state.gfEatIndex = gfIdx;
+                                    openBottomSheet(opt, optionChar);
+                                });
+                                
+                                bounds.push([eat.lat, eat.lng]);
+                                mapMarkers.push(marker);
+                            }
+                        });
+                    }
+                });
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+            }
+        }
+
+        function openBottomSheet(data, optionChar) {
+            const sheet = document.getElementById('bottom-sheet');
+            const overlay = document.getElementById('sheet-overlay');
+            const contentContainer = document.getElementById('bottom-sheet-content');
+            
+            const themeColor = optionChar === 'A' ? 'text-nature' : 'text-action';
+            
+            let images = [];
+            if (data && data.wikiTopics) {
+                data.wikiTopics.forEach(topic => {
+                    const cached = localStorage.getItem(`rv_img_${topic}`);
+                    if (cached && cached !== 'null') {
+                        images.push(cached);
+                    }
+                });
+            }
+            
+            let carouselHtml = '';
+            if (images.length > 0) {
+                carouselHtml = `
+                    <div class="relative w-full rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-slate-200 mb-5">
+                        <div class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full h-48">
+                            ${images.map(img => `<div class="min-w-full h-48 snap-center relative"><img src="${img}" class="w-full h-full object-cover" loading="lazy"></div>`).join('')}
+                        </div>
+                        ${images.length > 1 ? `<div class="absolute bottom-3 right-3 glass-badge text-white text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm"><i class="fa-solid fa-arrows-left-right"></i> SWIPE</div>` : ''}
+                    </div>
+                `;
+            }
+
+            let gfEatsHtml = '';
+            if (data.gfEats && data.gfEats.length > 0) {
+                const activeEat = data.gfEats[state.gfEatIndex];
+                const gfTabsHtml = data.gfEats.map((eat, idx) => {
+                    const isActive = idx === state.gfEatIndex;
+                    const tabClasses = isActive 
+                        ? 'bg-purple-600 text-white font-bold shadow-sm' 
+                        : 'bg-white text-purple-600 border border-purple-200 font-semibold hover:bg-purple-50';
+                    return `<button onclick="setGfEatBottomSheet(${idx})" class="whitespace-nowrap px-4 py-2 rounded-xl text-xs transition-colors shrink-0 ${tabClasses}">${eat.name}</button>`;
+                }).join('');
+
+                gfEatsHtml = `
+                    <div class="mt-6 bg-purple-50/50 border border-purple-200 rounded-3xl p-4 sm:p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-6 -top-6 opacity-5 rotate-12 pointer-events-none"><i class="fa-solid fa-wheat-awn-circle-exclamation text-9xl text-gf"></i></div>
+                        <div class="relative z-10">
+                            <h4 class="text-gf font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fa-solid fa-shield-heart text-lg"></i> Celiac Safe Eats</h4>
+                            <div class="flex overflow-x-auto no-scrollbar gap-2 mb-4 pb-1">
+                                ${gfTabsHtml}
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 shadow-sm border border-purple-100 fade-in">
+                                <div class="flex justify-between items-start mb-3 gap-2">
+                                    <h5 class="font-black text-slate-800 text-base leading-tight flex flex-col gap-1">
+                                        ${activeEat.name}
+                                        <a href="${activeEat.mapLink}" target="_blank" class="text-purple-600 hover:text-purple-800 transition text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 w-fit">
+                                            <i class="fa-solid fa-map-location-dot"></i> Maps Directions
+                                        </a>
+                                    </h5>
+                                    <span class="text-[9px] uppercase font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">${activeEat.type}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 font-semibold leading-relaxed bg-purple-50/50 p-3 rounded-xl border border-purple-100">
+                                    <i class="fa-solid fa-circle-info text-purple-400 mr-1.5"></i> ${activeEat.note}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            contentContainer.innerHTML = `
+                ${carouselHtml}
+                <div class="mb-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 relative">
+                    <div class="absolute -top-3 right-5 bg-white px-3 py-1 rounded-full shadow-md text-[10px] font-black uppercase tracking-widest border border-slate-100 ${themeColor}">Option ${optionChar}</div>
+                    <h2 class="text-2xl font-black text-slate-800 leading-tight mb-4 pr-16 flex items-center gap-3">
+                        ${data.title}
+                        <a href="${data.mapLink}" target="_blank" class="text-blue-500 hover:text-blue-700 transition" title="Open in Maps">
+                            <i class="fa-solid fa-map-location-dot text-lg"></i>
+                        </a>
+                    </h2>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${data.tags.map(tag => `<span class="text-xs sm:text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 font-bold text-slate-600 shadow-sm flex items-center">${tag}</span>`).join('')}
+                    </div>
+                    <p class="text-slate-600 text-sm sm:text-base leading-relaxed font-medium mb-4">${data.desc}</p>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-inner">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="bg-amber-100 text-amber-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5"><i class="fa-regular fa-clock"></i></div>
+                            <div><p class="text-[10px] uppercase font-bold text-slate-500">Travel Time Break Down</p><p class="text-sm font-semibold text-slate-800">${data.logistics.travelTime.join(', ')}</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5"><i class="fa-solid fa-van-shuttle"></i></div>
+                            <div><p class="text-[10px] uppercase font-bold text-slate-500">RV Access</p><p class="text-sm font-semibold text-slate-800">${data.logistics.rvAccess}</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="bg-rose-100 text-rose-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5"><i class="fa-solid fa-baby-carriage"></i></div>
+                            <div><p class="text-[10px] uppercase font-bold text-slate-500">Baby Gear</p><p class="text-sm font-semibold text-slate-800">${data.logistics.strollerOrCarrier}</p></div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current"><path d="M224 0C135.6 0 64 71.6 64 160V192H48C21.5 192 0 213.5 0 240V368C0 394.5 21.5 416 48 416H64V448C64 483.3 92.7 512 128 512H320C355.3 512 384 483.3 384 448V416H400C426.5 416 448 394.5 448 368V240C448 213.5 426.5 192 400 192H384V160C384 71.6 312.4 0 224 0zM128 160C128 107 171 64 224 64C277 64 320 107 320 160V192H128V160zM160 256H288C296.8 256 304 263.2 304 272V304C304 312.8 296.8 320 288 320H160C151.2 320 144 312.8 144 304V272C144 263.2 151.2 256 160 256z"/></svg>
+                            </div>
+                            <div><p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Situational Gear</p>
+                            <div class="flex flex-wrap gap-1.5 mt-1">${data.logistics.packingList.map(item => `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">${item}</span>`).join('')}</div></div>
+                        </div>
+                    </div>
+                </div>
+                ${gfEatsHtml}
+            `;
+            
+            contentContainer.scrollTop = 0;
+            sheet.classList.remove('translate-y-full');
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            
+            renderDayNav();
+            updateToggleUI();
+            renderContent();
+        }
+
+        function setGfEatBottomSheet(idx) {
+            state.gfEatIndex = idx;
+            const currentDay = tripData[state.campIndex].days[state.dayIndex];
+            const data = state.option === 'A' ? currentDay.optionA : currentDay.optionB;
+            openBottomSheet(data, state.option);
+        }
+
+        function closeBottomSheet() {
+            const sheet = document.getElementById('bottom-sheet');
+            const overlay = document.getElementById('sheet-overlay');
+            sheet.classList.add('translate-y-full');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+        }
 
         async function startCloudSync(force = false) {
             if (isSyncing) return;
@@ -699,6 +1049,10 @@
             renderDayNav();
             updateToggleUI();
             renderContent();
+            
+            if (state.view === 'map' && map) {
+                renderMapMarkers();
+            }
         }
 
         function setDay(index) {
@@ -1003,7 +1357,7 @@
                                 <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current"><path d="M224 0C135.6 0 64 71.6 64 160V192H48C21.5 192 0 213.5 0 240V368C0 394.5 21.5 416 48 416H64V448C64 483.3 92.7 512 128 512H320C355.3 512 384 483.3 384 448V416H400C426.5 416 448 394.5 448 368V240C448 213.5 426.5 192 400 192H384V160C384 71.6 312.4 0 224 0zM128 160C128 107 171 64 224 64C277 64 320 107 320 160V192H128V160zM160 256H288C296.8 256 304 263.2 304 272V304C304 312.8 296.8 320 288 320H160C151.2 320 144 312.8 144 304V272C144 263.2 151.2 256 160 256z"/></svg>
                                 </div>
-                                <div><p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Situational Gear Needed</p>
+                                <div><p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Situational Gear</p>
                                 <div class="flex flex-wrap gap-1.5 mt-1">${data.logistics.packingList.map(item => `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">${item}</span>`).join('')}</div></div>
                             </div>
                         </div>
