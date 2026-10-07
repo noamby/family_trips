@@ -74,6 +74,49 @@
         .leaflet-bottom.leaflet-right {
             margin-bottom: 20px;
         }
+        
+        /* Modal Base Classes */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        /* Strikethrough for checklist */
+        .checked-item {
+            text-decoration: line-through;
+            opacity: 0.6;
+            background-color: #f1f5f9 !important; /* slate-100 */
+            border-color: #cbd5e1 !important; /* slate-300 */
+            color: #64748b !important; /* slate-500 */
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased">
@@ -89,12 +132,22 @@
                 </div>
                 
                 <div class="flex gap-2 sm:gap-3">
-                    <a href="https://maps.google.com/?q=Amsterdam+Airport" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="Flights">
+                    <button onclick="openModal('flight-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="Flights">
                         <i class="fa-solid fa-plane-departure text-white text-lg"></i>
-                    </a>
-                    <a href="https://maps.google.com/?q=RV+Rental" target="_blank" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="RV Rental">
+                    </button>
+                    <button onclick="openModal('rv-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center relative" title="RV Info">
                         <i class="fa-solid fa-caravan text-accent text-lg"></i>
-                    </a>
+                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-accent border border-slate-900"></span>
+                        </span>
+                    </button>
+                    <button onclick="openModal('gf-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="GF Translation Cards">
+                        <span class="fa-stack text-[11px] w-5 h-5 flex items-center justify-center">
+                            <i class="fa-solid fa-wheat-awn text-gf fa-stack-1x"></i>
+                            <i class="fa-solid fa-ban text-red-500 fa-stack-2x opacity-90"></i>
+                        </span>
+                    </button>
                     <button onclick="startCloudSync(true)" class="relative bg-blue-600 hover:bg-blue-500 transition-colors w-10 h-10 rounded-xl border border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center group overflow-hidden" title="Sync Offline Data">
                         <div id="sync-button-bg" class="absolute inset-0 pointer-events-none transition-all duration-300" style="background: conic-gradient(rgba(255,255,255,0.3) 0%, transparent 0%);"></div>
                         <div class="relative z-10 w-full h-full flex items-center justify-center">
@@ -120,7 +173,7 @@
             <nav id="camp-nav" class="flex space-x-3 overflow-x-auto no-scrollbar pb-2 snap-x"></nav>
         </header>
 
-        <!-- LIST VIEW CONTAINER (Fully scrollable) -->
+        <!-- LIST VIEW CONTAINER -->
         <div id="list-view-container" class="flex flex-col flex-1 overflow-y-auto no-scrollbar relative bg-slate-50 pb-16">
             <div id="camp-site-banner" class="bg-blue-50 border-b border-blue-100 px-4 sm:px-8 py-3 shrink-0 flex items-center justify-between z-20"></div>
 
@@ -138,18 +191,19 @@
             <main id="content-area" class="px-4 sm:px-8 pt-4 relative bg-slate-50 shrink-0">
                 <!-- Main injection -->
             </main>
+            
+            <!-- Emergency Contacts Injection -->
+            <div id="emergency-area" class="px-4 sm:px-8 pt-4 pb-8 relative bg-slate-50 shrink-0 max-w-2xl mx-auto w-full"></div>
         </div>
 
         <!-- MAP VIEW CONTAINER -->
         <div id="map-view-container" class="hidden flex-1 relative w-full h-full z-10">
             <div id="map" class="absolute inset-0 w-full h-full"></div>
             
-            <!-- Map Overlay Legend (Now Interactive) -->
             <div class="absolute top-4 left-4 right-4 z-[400] pointer-events-none flex justify-center">
                 <div id="map-legend" class="bg-white/90 backdrop-blur shadow-lg rounded-full p-1.5 flex items-center gap-1 border border-slate-200 pointer-events-auto"></div>
             </div>
 
-            <!-- Locate Me Button -->
             <button onclick="locateUser()" class="absolute bottom-28 right-[11px] z-[400] w-[34px] h-[34px] bg-white rounded shadow-[0_1px_5px_rgba(0,0,0,0.65)] flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors pointer-events-auto" title="Find My Location">
                 <i class="fa-solid fa-location-crosshairs text-[15px]"></i>
             </button>
@@ -183,6 +237,140 @@
                 <div id="sync-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
         </div>
+        
+        <!-- FLIGHT MODAL -->
+        <div id="flight-modal" class="modal-overlay" onclick="closeModal(event, 'flight-modal')">
+            <div class="modal-content relative no-scrollbar">
+                <div class="sticky top-0 bg-blue-600 text-white p-4 flex justify-between items-center z-10">
+                    <h3 class="font-black text-lg flex items-center gap-2"><i class="fa-solid fa-plane-departure text-blue-200"></i> Flight Details</h3>
+                    <button onclick="forceCloseModal('flight-modal')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="p-5 sm:p-6 bg-slate-50">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-4">
+                        <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Outbound - Aug 14</span>
+                            <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">KLM 602</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="text-center">
+                                <p class="text-2xl font-black text-slate-800">LAX</p>
+                                <p class="text-[10px] text-slate-500 font-bold">1:50 PM</p>
+                            </div>
+                            <div class="flex-1 flex items-center justify-center relative px-2">
+                                <div class="w-full h-px bg-slate-300"></div>
+                                <i class="fa-solid fa-plane text-slate-400 absolute bg-white px-2 text-xs"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-black text-slate-800">AMS</p>
+                                <p class="text-[10px] text-slate-500 font-bold">9:15 AM <sup class="text-[8px]">+1</sup></p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="https://maps.google.com/?q=Amsterdam+Airport+Schiphol" target="_blank" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-accent"></i> Navigate to Schiphol
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RV VITAL STATS MODAL -->
+        <div id="rv-modal" class="modal-overlay" onclick="closeModal(event, 'rv-modal')">
+            <div class="modal-content relative no-scrollbar">
+                <div class="sticky top-0 bg-slate-900 text-white p-4 flex justify-between items-center z-10">
+                    <h3 class="font-black text-lg flex items-center gap-2"><i class="fa-solid fa-caravan text-accent"></i> Indie Campers Atlas</h3>
+                    <button onclick="forceCloseModal('rv-modal')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="p-5 sm:p-6 bg-slate-50">
+                    
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold text-amber-800 text-sm mb-1">Low Bridges & Tunnels</h4>
+                                <p class="text-xs text-amber-700 font-medium leading-relaxed">Always check overhead clearance. This vehicle is significantly taller than a standard car. You are responsible for roof damage.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Metric Dimensions</h4>
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-arrows-up-down text-slate-400 text-xl mb-2"></i>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Height</span>
+                            <span class="text-xl font-black text-slate-800">3.10 m</span>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-arrows-left-right text-slate-400 text-xl mb-2"></i>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Width</span>
+                            <span class="text-xl font-black text-slate-800">2.35 m</span>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-ruler-horizontal text-slate-400 text-xl mb-2"></i>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Length</span>
+                            <span class="text-xl font-black text-slate-800">7.40 m</span>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-weight-scale text-slate-400 text-xl mb-2"></i>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Weight</span>
+                            <span class="text-xl font-black text-slate-800">3500 kg</span>
+                        </div>
+                    </div>
+                    
+                    <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Vehicle Details</h4>
+                    <ul class="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100 mb-6">
+                        <li class="p-4 flex justify-between items-center">
+                            <span class="text-sm font-semibold text-slate-600">License Plate</span>
+                            <span class="text-base font-black text-slate-800 bg-yellow-300 px-3 py-1 rounded border border-yellow-400 shadow-inner">AA-123-BB</span>
+                        </li>
+                        <li class="p-4 flex justify-between items-center">
+                            <span class="text-sm font-semibold text-slate-600">Fuel Type</span>
+                            <span class="text-sm font-black text-slate-800">Diesel</span>
+                        </li>
+                        <li class="p-4 flex justify-between items-center">
+                            <span class="text-sm font-semibold text-slate-600">Fresh Water</span>
+                            <span class="text-sm font-black text-slate-800">120 L</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="https://maps.google.com/?q=Indie+Campers+Amsterdam" target="_blank" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-accent"></i> Navigate to Rental Depot
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CELIAC TRANSLATION MODAL -->
+        <div id="gf-modal" class="modal-overlay" onclick="closeModal(event, 'gf-modal')">
+            <div class="modal-content relative no-scrollbar">
+                <div class="sticky top-0 bg-purple-700 text-white p-4 flex justify-between items-center z-10">
+                    <h3 class="font-black text-lg flex items-center gap-2"><i class="fa-solid fa-shield-heart text-purple-200"></i> Celiac Translation</h3>
+                    <button onclick="forceCloseModal('gf-modal')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <div class="bg-purple-800 flex overflow-x-auto no-scrollbar snap-x">
+                    <button onclick="setGfLang('EN')" id="gf-tab-EN" class="gf-lang-tab flex-1 min-w-[80px] py-3 text-xs font-black transition-colors bg-white text-purple-700 snap-center">English</button>
+                    <button onclick="setGfLang('NL')" id="gf-tab-NL" class="gf-lang-tab flex-1 min-w-[80px] py-3 text-xs font-bold transition-colors text-purple-200 hover:bg-purple-700 snap-center">Dutch</button>
+                    <button onclick="setGfLang('DE')" id="gf-tab-DE" class="gf-lang-tab flex-1 min-w-[80px] py-3 text-xs font-bold transition-colors text-purple-200 hover:bg-purple-700 snap-center">German</button>
+                </div>
+
+                <div class="p-6 bg-slate-50 text-center relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
+                        <i class="fa-solid fa-wheat-awn-circle-exclamation text-[15rem]"></i>
+                    </div>
+                    
+                    <div id="gf-card-content" class="relative z-10">
+                        <!-- Dynamic Content injected via JS based on selected language -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Leaflet JS -->
@@ -192,7 +380,7 @@
         const tripData = [
             {
                 id: "camp1", shortName: "South Holland", title: "Base Camp 1: Windmills & Coast",
-                campSite: { name: "Vakantiepark Duinrell", mapLink: "https://www.google.com/maps/search/?api=1&query=Vakantiepark+Duinrell", lat: 52.1458, lng: 4.3820 },
+                campSite: { name: "Vakantiepark Duinrell", mapLink: "https://www.google.com/maps/search/?api=1&query=Vakantiepark+Duinrell", lat: 52.1458, lng: 4.3820, hospital: { name: "HMC Antoniushove", address: "Burgemeester Banninglaan 1, 2262 BA Leidschendam", mapLink: "https://maps.google.com/?cid=17118247599960561743" } },
                 days: [
                     {
                         dayLabel: "Day 1", globalIndex: 0,
@@ -273,7 +461,7 @@
             },
             {
                 id: "camp2", shortName: "North Brabant", title: "Base Camp 2: Fairy Tale Hub",
-                campSite: { name: "Beekse Bergen Resort", mapLink: "https://www.google.com/maps/search/?api=1&query=Beekse+Bergen+Safari+Resort", lat: 51.5273, lng: 5.1206 },
+                campSite: { name: "Beekse Bergen Resort", mapLink: "https://www.google.com/maps/search/?api=1&query=Beekse+Bergen+Safari+Resort", lat: 51.5273, lng: 5.1206, hospital: { name: "St. Elisabeth Hospital (ETZ)", address: "Hilvarenbeekse Weg 60, 5022 GC Tilburg", mapLink: "https://maps.google.com/?cid=10070973471884130561" } },
                 days: [
                     {
                         dayLabel: "Day 4", globalIndex: 3,
@@ -379,7 +567,7 @@
             },
             {
                 id: "camp3", shortName: "Eifel (DE)", title: "Base Camp 3: Eifel Park",
-                campSite: { name: "Rursee Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Wohnmobilpark+Rursee", lat: 50.6094, lng: 6.3860 },
+                campSite: { name: "Rursee Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Wohnmobilpark+Rursee", lat: 50.6094, lng: 6.3860, hospital: { name: "Eifel Clinic St. Brigida", address: "Kammerbruchstraße 8, 52152 Simmerath, Germany", mapLink: "https://maps.google.com/?cid=2825198683370956100" } },
                 days: [
                     {
                         dayLabel: "Day 8", globalIndex: 7,
@@ -485,7 +673,7 @@
             },
             {
                 id: "camp4", shortName: "Gelderland", title: "Base Camp 4: Green Heart",
-                campSite: { name: "Arnhem Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Camping+Arnhem", lat: 52.0116, lng: 5.9044 },
+                campSite: { name: "Arnhem Camp", mapLink: "https://www.google.com/maps/search/?api=1&query=Camping+Arnhem", lat: 52.0116, lng: 5.9044, hospital: { name: "Rijnstate Arnhem", address: "Wagnerlaan 55, 6815 AD Arnhem", mapLink: "https://maps.google.com/?cid=8210824362871664875" } },
                 days: [
                     {
                         dayLabel: "Day 12", globalIndex: 11,
@@ -576,7 +764,8 @@
             mapFilters: {
                 camps: [0, 1, 2, 3], 
                 types: ['nature', 'action', 'eats']
-            }
+            },
+            checklist: {}
         };
         
         let isSyncing = false;
@@ -874,12 +1063,37 @@
             });
         }
 
+        // Checklist toggle function
+        function toggleChecklistItem(itemKey) {
+            state.checklist[itemKey] = !state.checklist[itemKey];
+            const isChecked = state.checklist[itemKey];
+            
+            // Decoupled gear toggle: updates all instances (Map & List) instantly without reloading HTML
+            document.querySelectorAll(`button[data-itemkey="${itemKey}"]`).forEach(btn => {
+                const iconContainer = btn.querySelector('.check-icon-container');
+                if (isChecked) {
+                    btn.classList.add('checked-item');
+                    btn.classList.remove('hover:bg-emerald-50');
+                    iconContainer.classList.remove('border-emerald-400', 'group-hover:bg-emerald-100');
+                    iconContainer.classList.add('border-transparent', 'bg-slate-300');
+                    iconContainer.innerHTML = '<i class="fa-solid fa-check text-white text-[10px]"></i>';
+                } else {
+                    btn.classList.remove('checked-item');
+                    btn.classList.add('hover:bg-emerald-50');
+                    iconContainer.classList.remove('border-transparent', 'bg-slate-300');
+                    iconContainer.classList.add('border-emerald-400', 'group-hover:bg-emerald-100');
+                    iconContainer.innerHTML = '';
+                }
+            });
+        }
+
         function openBottomSheet(data, optionChar) {
             const sheet = document.getElementById('bottom-sheet');
             const overlay = document.getElementById('sheet-overlay');
             const contentContainer = document.getElementById('bottom-sheet-content');
             
             const themeColor = optionChar === 'A' ? 'text-nature' : 'text-action';
+            const checklistPrefix = `gear_${state.campIndex}_${state.dayIndex}_${optionChar}`;
             
             let images = [];
             if (data && data.wikiTopics) {
@@ -935,12 +1149,31 @@
                             <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current"><path d="M224 0C135.6 0 64 71.6 64 160V192H48C21.5 192 0 213.5 0 240V368C0 394.5 21.5 416 48 416H64V448C64 483.3 92.7 512 128 512H320C355.3 512 384 483.3 384 448V416H400C426.5 416 448 394.5 448 368V240C448 213.5 426.5 192 400 192H384V160C384 71.6 312.4 0 224 0zM128 160C128 107 171 64 224 64C277 64 320 107 320 160V192H128V160zM160 256H288C296.8 256 304 263.2 304 272V304C304 312.8 296.8 320 288 320H160C151.2 320 144 312.8 144 304V272C144 263.2 151.2 256 160 256z"/></svg>
                             </div>
-                            <div><p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Situational Gear</p>
-                            <div class="flex flex-wrap gap-1.5 mt-1">${data.logistics.packingList.map(item => `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">${item}</span>`).join('')}</div></div>
+                            <div class="w-full">
+                                <div class="flex justify-between items-center mb-1">
+                                    <p class="text-[10px] uppercase font-bold text-slate-500">Situational Gear Checklist</p>
+                                    <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Tap to check</span>
+                                </div>
+                                <div class="flex flex-col gap-1.5 mt-1 w-full">
+                                    ${data.logistics.packingList.map((item, index) => {
+                                        const itemKey = `${checklistPrefix}_${index}`;
+                                        const isChecked = state.checklist[itemKey];
+                                        return `
+                                        <button data-itemkey="${itemKey}" onclick="toggleChecklistItem('${itemKey}')" class="text-left w-full bg-white border ${isChecked ? 'border-emerald-200 checked-item' : 'border-emerald-200 hover:bg-emerald-50'} text-emerald-700 text-xs sm:text-sm font-bold px-3 py-2 rounded-lg shadow-sm transition-all flex items-center justify-between group">
+                                            <span>${item}</span>
+                                            <div class="check-icon-container w-5 h-5 rounded-full border-2 ${isChecked ? 'border-transparent bg-slate-300' : 'border-emerald-400 group-hover:bg-emerald-100'} flex items-center justify-center transition-colors">
+                                                ${isChecked ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
+                                            </div>
+                                        </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div id="sheet-gf-eats"></div>
+                <div id="sheet-emergency-area">${getEmergencyInfoHtml()}</div>
             `;
             
             contentContainer.scrollTop = 0;
@@ -951,7 +1184,11 @@
             renderGfEats(true);
             renderDayNav();
             updateToggleUI();
-            renderContent();
+            
+            // Only render content if we are in list view, otherwise it overwrites the list view unnecessarily while on map
+            if (state.view === 'list') {
+                renderContent();
+            }
         }
 
         function closeBottomSheet() {
@@ -1021,6 +1258,54 @@
                 </div>
             `;
         }
+        
+        function getEmergencyInfoHtml() {
+            const currentCamp = tripData[state.campIndex];
+            
+            return `
+                <div class="mt-6 pt-6 border-t border-slate-200">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 ml-1 flex items-center"><i class="fa-solid fa-truck-medical mr-2"></i> Local Emergency Contacts</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                        <a href="tel:112" class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between hover:bg-red-100 transition shadow-sm group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                    <i class="fa-solid fa-phone text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-red-600 uppercase">EU Emergency</p>
+                                    <p class="text-lg font-black text-slate-800">112</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-red-300"></i>
+                        </a>
+                        
+                        <a href="tel:+18557855096" class="bg-slate-100 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:bg-slate-200 transition shadow-sm group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white text-slate-600 flex items-center justify-center group-hover:bg-slate-800 group-hover:text-white transition-colors shadow-sm">
+                                    <i class="fa-solid fa-headset text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Indie Campers Support</p>
+                                    <p class="text-sm font-black text-slate-800">1-855-785-5096</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-400"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i class="fa-regular fa-hospital text-8xl text-blue-500"></i></div>
+                        <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Nearest Hospital to Camp</p>
+                        <h4 class="text-base font-black text-slate-800">${currentCamp.campSite.hospital.name}</h4>
+                        <p class="text-xs font-semibold text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1"></i> ${currentCamp.campSite.hospital.address}</p>
+                        <a href="${currentCamp.campSite.hospital.mapLink}" target="_blank" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 w-fit bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition">
+                            <i class="fa-solid fa-map-location-dot"></i> Get Directions
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
 
         function renderContent() {
             const container = document.getElementById('content-area');
@@ -1028,6 +1313,7 @@
             const data = state.option === 'A' ? currentDay.optionA : currentDay.optionB;
             
             const themeColor = state.option === 'A' ? 'text-nature' : 'text-action';
+            const checklistPrefix = `gear_${state.campIndex}_${state.dayIndex}_${state.option}`;
 
             let images = [];
             if (data && data.wikiTopics) {
@@ -1066,7 +1352,7 @@
             }
 
             container.innerHTML = `
-                <div class="fade-in pb-8 max-w-2xl mx-auto w-full">
+                <div class="fade-in max-w-2xl mx-auto w-full">
                     ${carouselHtml}
                     
                     <div class="mb-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 relative">
@@ -1104,8 +1390,25 @@
                                 <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current"><path d="M224 0C135.6 0 64 71.6 64 160V192H48C21.5 192 0 213.5 0 240V368C0 394.5 21.5 416 48 416H64V448C64 483.3 92.7 512 128 512H320C355.3 512 384 483.3 384 448V416H400C426.5 416 448 394.5 448 368V240C448 213.5 426.5 192 400 192H384V160C384 71.6 312.4 0 224 0zM128 160C128 107 171 64 224 64C277 64 320 107 320 160V192H128V160zM160 256H288C296.8 256 304 263.2 304 272V304C304 312.8 296.8 320 288 320H160C151.2 320 144 312.8 144 304V272C144 263.2 151.2 256 160 256z"/></svg>
                                 </div>
-                                <div><p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Situational Gear</p>
-                                <div class="flex flex-wrap gap-1.5 mt-1">${data.logistics.packingList.map(item => `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">${item}</span>`).join('')}</div></div>
+                                <div class="w-full">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-[10px] uppercase font-bold text-slate-500">Situational Gear Checklist</p>
+                                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Tap to check</span>
+                                    </div>
+                                    <div class="flex flex-col gap-1.5 mt-1 w-full">
+                                    ${data.logistics.packingList.map((item, index) => {
+                                        const itemKey = `${checklistPrefix}_${index}`;
+                                        const isChecked = state.checklist[itemKey];
+                                        return `
+                                        <button data-itemkey="${itemKey}" onclick="toggleChecklistItem('${itemKey}')" class="text-left w-full bg-white border ${isChecked ? 'border-emerald-200 checked-item' : 'border-emerald-200 hover:bg-emerald-50'} text-emerald-700 text-xs sm:text-sm font-bold px-3 py-2 rounded-lg shadow-sm transition-all flex items-center justify-between group">
+                                            <span>${item}</span>
+                                            <div class="check-icon-container w-5 h-5 rounded-full border-2 ${isChecked ? 'border-transparent bg-slate-300' : 'border-emerald-400 group-hover:bg-emerald-100'} flex items-center justify-center transition-colors">
+                                                ${isChecked ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
+                                            </div>
+                                        </button>
+                                        `;
+                                    }).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1115,6 +1418,11 @@
             `;
             
             renderGfEats(false);
+            
+            const emergencyContainer = document.getElementById('emergency-area');
+            if (emergencyContainer) {
+                emergencyContainer.innerHTML = getEmergencyInfoHtml();
+            }
         }
 
         async function startCloudSync(force = false) {
@@ -1405,6 +1713,70 @@
                 btnB.className = "flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2 bg-white text-action shadow-md border border-slate-100";
                 btnA.className = "flex-1 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2 bg-transparent text-slate-500 hover:text-slate-700";
             }
+        }
+        
+        // Modal Logic
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if (id === 'gf-modal') {
+                setGfLang('EN'); // Default to English when opening
+            }
+        }
+
+        function forceCloseModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function closeModal(event, id) {
+            // Only close if clicking the overlay itself, not the content
+            if (event.target.id === id) {
+                forceCloseModal(id);
+            }
+        }
+        
+        // GF Translation Logic
+        const gfTranslations = {
+            'EN': {
+                title: 'Strict Celiac Disease',
+                message: 'I have Celiac Disease. I cannot eat any foods containing gluten (wheat, rye, barley, or oats). Even a crumb or cross-contamination from shared fryers, cutting boards, or utensils will make me severely ill. Are you able to safely accommodate this?'
+            },
+            'NL': {
+                title: 'Strikte Coeliakie',
+                message: 'Ik heb coeliakie. Ik mag absoluut geen voedsel eten dat gluten bevat (tarwe, rogge, gerst of haver). Zelfs een kruimel of kruisbesmetting door gedeelde friteuses, snijplanken of keukengerei maakt me ernstig ziek. Kunt u hier veilig rekening mee houden?'
+            },
+            'DE': {
+                title: 'Strenge Zöliakie',
+                message: 'Ich habe Zöliakie. Ich darf keine Lebensmittel essen, die Gluten (Weizen, Roggen, Gerste oder Hafer) enthalten. Selbst ein Krümel oder eine Kreuzkontamination durch gemeinsam genutzte Fritteusen, Schneidebretter oder Utensilien macht mich schwer krank. Können Sie das sicher berücksichtigen?'
+            }
+        };
+
+        function setGfLang(lang) {
+            // Update tabs UI
+            document.querySelectorAll('.gf-lang-tab').forEach(tab => {
+                tab.className = 'gf-lang-tab flex-1 min-w-[80px] py-3 text-xs font-bold transition-colors text-purple-200 hover:bg-purple-700 snap-center';
+            });
+            const activeTab = document.getElementById(`gf-tab-${lang}`);
+            if(activeTab) {
+                activeTab.className = 'gf-lang-tab flex-1 min-w-[80px] py-3 text-xs font-black transition-colors bg-white text-purple-700 shadow-sm snap-center rounded-t-lg';
+            }
+
+            // Update content
+            const content = document.getElementById('gf-card-content');
+            const data = gfTranslations[lang];
+            
+            content.innerHTML = `
+                <h4 class="text-2xl font-black text-slate-800 mb-4 border-b-2 border-purple-200 pb-4">${data.title}</h4>
+                <p class="text-lg font-bold text-slate-700 leading-relaxed text-left">${data.message}</p>
+                
+                <div class="mt-8 flex justify-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shadow-inner border border-red-200">
+                        <i class="fa-solid fa-wheat-awn text-red-500 text-xl line-through decoration-red-600 decoration-2"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shadow-inner border border-red-200">
+                        <i class="fa-solid fa-bread-slice text-red-500 text-xl line-through decoration-red-600 decoration-2"></i>
+                    </div>
+                </div>
+            `;
         }
 
         window.addEventListener('DOMContentLoaded', () => {
