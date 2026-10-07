@@ -821,8 +821,45 @@
                 camps: [0, 1, 2, 3], 
                 types: ['nature', 'action', 'eats']
             },
-            checklist: {}
+            checklist: {},
+            sheetOpen: false
         };
+
+        function saveAppState() {
+            const sheet = document.getElementById('bottom-sheet');
+            const isSheetOpen = sheet ? !sheet.classList.contains('translate-y-full') : false;
+            
+            const stateToSave = {
+                tab: state.tab,
+                campIndex: state.campIndex,
+                dayIndex: state.dayIndex,
+                option: state.option,
+                gfEatIndex: state.gfEatIndex,
+                mapFilters: state.mapFilters,
+                checklist: state.checklist,
+                sheetOpen: isSheetOpen
+            };
+            localStorage.setItem('rv_app_state', JSON.stringify(stateToSave));
+        }
+
+        function loadAppState() {
+            const saved = localStorage.getItem('rv_app_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.tab = parsed.tab || 'planner';
+                    state.campIndex = parsed.campIndex !== undefined ? parsed.campIndex : 0;
+                    state.dayIndex = parsed.dayIndex !== undefined ? parsed.dayIndex : 0;
+                    state.option = parsed.option || 'A';
+                    state.gfEatIndex = parsed.gfEatIndex !== undefined ? parsed.gfEatIndex : 0;
+                    if (parsed.mapFilters) state.mapFilters = parsed.mapFilters;
+                    if (parsed.checklist) state.checklist = parsed.checklist;
+                    state.sheetOpen = parsed.sheetOpen || false;
+                } catch (e) {
+                    console.error("Could not parse saved state", e);
+                }
+            }
+        }
         
         let isSyncing = false;
         let map = null;
@@ -886,6 +923,8 @@
                 }
                 renderMapMarkers();
             }
+            
+            saveAppState();
         }
 
         function initMap() {
@@ -953,6 +992,7 @@
             }
             renderCampNav();
             renderMapMarkers();
+            saveAppState();
         }
 
         function toggleMapTypeFilter(typeId) {
@@ -963,6 +1003,7 @@
             }
             renderMapLegend();
             renderMapMarkers();
+            saveAppState();
         }
 
         function renderMapLegend() {
@@ -1153,6 +1194,8 @@
                     iconContainer.innerHTML = '';
                 }
             });
+            
+            saveAppState();
         }
 
         function openBottomSheet(data, optionChar) {
@@ -1257,6 +1300,8 @@
             if (state.tab === 'planner') {
                 renderContent();
             }
+            
+            saveAppState();
         }
 
         function closeBottomSheet() {
@@ -1265,11 +1310,14 @@
             sheet.style.transform = ''; 
             sheet.classList.add('translate-y-full');
             overlay.classList.add('opacity-0', 'pointer-events-none');
+            
+            saveAppState();
         }
 
         function changeGfEat(idx, isSheet) {
             state.gfEatIndex = idx;
             renderGfEats(isSheet);
+            saveAppState();
         }
 
         function renderGfEats(isSheet = false) {
@@ -1662,6 +1710,8 @@
             if (state.tab === 'map' && map) {
                 renderMapMarkers();
             }
+            
+            saveAppState();
         }
 
         function setDay(index) {
@@ -1671,6 +1721,8 @@
             renderDayNav(); 
             updateToggleUI();
             renderContent();
+            
+            saveAppState();
         }
 
         function setOption(opt) {
@@ -1678,6 +1730,8 @@
             state.gfEatIndex = 0;
             updateToggleUI();
             renderContent();
+            
+            saveAppState();
         }
 
         // Updated renderCampNav to handle both the Planner scroll list AND Map filter buttons
@@ -1841,13 +1895,21 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            loadAppState(); // Restore the global state from localStorage first!
+            
             loadWeatherFromCache();
-            renderCampNav();
-            renderCampSiteBanner();
-            renderDayNav();
-            updateToggleUI();
-            renderContent();
+            
+            // Re-initialize the UI based on the saved tab state
+            switchMainTab(state.tab);
+            
             initDraggableSheet();
+
+            // Re-open the bottom sheet if it was previously open
+            if (state.sheetOpen) {
+                const currentDay = tripData[state.campIndex].days[state.dayIndex];
+                const data = state.option === 'A' ? currentDay.optionA : currentDay.optionB;
+                openBottomSheet(data, state.option);
+            }
 
             const isCached = localStorage.getItem('rv_sync_completed');
             if (!isCached) {
