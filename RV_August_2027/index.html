@@ -121,96 +121,152 @@
 </head>
 <body class="text-slate-800 antialiased">
 
-    <div class="app-container">
+    <!-- pb-[68px] ensures content is not hidden behind the fixed bottom nav -->
+    <div class="app-container pb-[68px]">
         
-        <!-- HEADER -->
-        <header class="bg-slate-900 text-white pt-6 pb-4 px-4 sm:px-8 shadow-lg z-30 shrink-0 relative">
-            <div class="flex justify-between items-center mb-5">
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-black tracking-wide text-white drop-shadow-sm">Euro RV '27</h1>
-                    <p class="text-xs sm:text-sm text-accent font-bold uppercase tracking-wider mt-1"><i class="fa-solid fa-calendar-days mr-1"></i> August 14-28, 2027</p>
-                </div>
-                
-                <div class="flex gap-2 sm:gap-3">
-                    <button onclick="openModal('flight-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="Flights">
-                        <i class="fa-solid fa-plane-departure text-white text-lg"></i>
-                    </button>
-                    <button onclick="openModal('rv-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center relative" title="RV Info">
-                        <i class="fa-solid fa-caravan text-accent text-lg"></i>
-                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-3 w-3 bg-accent border border-slate-900"></span>
-                        </span>
-                    </button>
-                    <button onclick="openModal('gf-modal')" class="bg-white/10 hover:bg-white/20 transition-colors w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center" title="GF Translation Cards">
-                        <span class="fa-stack text-[11px] w-5 h-5 flex items-center justify-center">
-                            <i class="fa-solid fa-wheat-awn text-gf fa-stack-1x"></i>
-                            <i class="fa-solid fa-ban text-red-500 fa-stack-2x opacity-90"></i>
-                        </span>
-                    </button>
-                    <button onclick="startCloudSync(true)" class="relative bg-blue-600 hover:bg-blue-500 transition-colors w-10 h-10 rounded-xl border border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center group overflow-hidden" title="Sync Offline Data">
-                        <div id="sync-button-bg" class="absolute inset-0 pointer-events-none transition-all duration-300" style="background: conic-gradient(rgba(255,255,255,0.3) 0%, transparent 0%);"></div>
-                        <div class="relative z-10 w-full h-full flex items-center justify-center">
-                            <i class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500 text-white text-lg" id="sync-icon"></i>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- VIEW TOGGLE -->
-            <div class="bg-slate-800 p-1.5 rounded-xl flex max-w-[280px] mx-auto mb-5 relative shadow-inner">
-                <button onclick="switchView('list')" id="tab-list" class="flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-list-ul"></i> List View
-                </button>
-                <button onclick="switchView('map')" id="tab-map" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-map-location-dot"></i> Map View
-                </button>
-            </div>
-
-            <div class="flex justify-between items-center mb-3">
-                <h2 id="camp-nav-title" class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Select Region / Base Camp</h2>
-            </div>
-            <nav id="camp-nav" class="flex space-x-3 overflow-x-auto no-scrollbar pb-2 snap-x"></nav>
-        </header>
-
-        <!-- LIST VIEW CONTAINER -->
-        <div id="list-view-container" class="flex flex-col flex-1 overflow-y-auto no-scrollbar relative bg-slate-50 pb-16">
-            <div id="camp-site-banner" class="bg-blue-50 border-b border-blue-100 px-4 sm:px-8 py-3 shrink-0 flex items-center justify-between z-20"></div>
-
-            <div class="bg-white border-b border-slate-200 z-10 shrink-0 px-4 sm:px-8 pt-3 pb-3 shadow-sm">
-                <nav id="day-nav" class="flex overflow-x-auto no-scrollbar space-x-2 sm:space-x-4 snap-x"></nav>
-            </div>
-
-            <div class="px-4 sm:px-8 pt-5 pb-2 shrink-0 bg-slate-50 z-10">
-                <div class="flex bg-slate-200 p-1.5 rounded-2xl relative max-w-md mx-auto w-full">
-                    <button id="toggle-A" onclick="setOption('A')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
-                    <button id="toggle-B" onclick="setOption('B')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
-                </div>
-            </div>
-
-            <main id="content-area" class="px-4 sm:px-8 pt-4 relative bg-slate-50 shrink-0">
-                <!-- Main injection -->
-            </main>
+        <!-- 1. PLANNER TAB (List View) -->
+        <div id="tab-planner" class="flex flex-col flex-1 h-full overflow-hidden fade-in relative">
             
-            <!-- Emergency Contacts Injection -->
-            <div id="emergency-area" class="px-4 sm:px-8 pt-4 pb-8 relative bg-slate-50 shrink-0 max-w-2xl mx-auto w-full"></div>
+            <header class="bg-slate-900 text-white pt-6 pb-3 px-4 sm:px-8 shadow-lg z-30 shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-black tracking-wide text-white drop-shadow-sm">Euro RV '27</h1>
+                        <p class="text-[11px] text-accent font-bold uppercase tracking-wider mt-0.5"><i class="fa-solid fa-calendar-days mr-1"></i> Aug 14-28, 2027</p>
+                    </div>
+                    <div id="sync-status-indicator" class="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-inner flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-cloud text-slate-400 text-xs"></i>
+                        <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Ready</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Select Region / Base Camp</h2>
+                </div>
+                <nav id="camp-nav" class="flex space-x-3 overflow-x-auto no-scrollbar pb-2 snap-x"></nav>
+            </header>
+
+            <div class="flex-1 overflow-y-auto no-scrollbar bg-slate-50 relative flex flex-col">
+                <div id="camp-site-banner" class="bg-blue-50 border-b border-blue-100 px-4 sm:px-8 py-3 shrink-0 flex items-center justify-between z-20"></div>
+
+                <div class="bg-white border-b border-slate-200 z-30 shrink-0 px-4 sm:px-8 pt-3 pb-3 shadow-sm sticky top-0">
+                    <nav id="day-nav" class="flex overflow-x-auto no-scrollbar space-x-2 sm:space-x-4 snap-x"></nav>
+                </div>
+
+                <div class="px-4 sm:px-8 pt-5 pb-2 shrink-0 bg-slate-50 z-10">
+                    <div class="flex bg-slate-200 p-1.5 rounded-2xl relative max-w-md mx-auto w-full">
+                        <button id="toggle-A" onclick="setOption('A')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
+                        <button id="toggle-B" onclick="setOption('B')" class="flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition-all duration-300 z-10 flex items-center justify-center gap-2"></button>
+                    </div>
+                </div>
+
+                <main id="content-area" class="px-4 sm:px-8 pt-4 relative bg-slate-50 shrink-0 max-w-2xl mx-auto w-full">
+                    <!-- Main injection -->
+                </main>
+                
+                <div id="emergency-area" class="px-4 sm:px-8 pt-4 pb-8 relative bg-slate-50 shrink-0 max-w-2xl mx-auto w-full"></div>
+            </div>
         </div>
 
-        <!-- MAP VIEW CONTAINER -->
-        <div id="map-view-container" class="hidden flex-1 relative w-full h-full z-10">
-            <div id="map" class="absolute inset-0 w-full h-full"></div>
+        <!-- 2. MAP TAB (Map View) -->
+        <div id="tab-map" class="hidden flex-1 relative w-full h-full z-10 bg-slate-200">
+            <div id="map" class="absolute inset-0 w-full h-full z-0"></div>
             
-            <div class="absolute top-4 left-4 right-4 z-[400] pointer-events-none flex justify-center">
+            <div class="absolute top-4 left-4 right-4 z-[400] pointer-events-none flex flex-col items-center gap-2">
+                <!-- Map Camp Filters (Moved from global header) -->
+                <div id="map-camp-filters" class="bg-white/90 backdrop-blur shadow-lg rounded-full p-1.5 flex items-center gap-1.5 border border-slate-200 pointer-events-auto overflow-x-auto max-w-full no-scrollbar"></div>
+                <!-- Map Legend -->
                 <div id="map-legend" class="bg-white/90 backdrop-blur shadow-lg rounded-full p-1.5 flex items-center gap-1 border border-slate-200 pointer-events-auto"></div>
             </div>
 
-            <button onclick="locateUser()" class="absolute bottom-28 right-[11px] z-[400] w-[34px] h-[34px] bg-white rounded shadow-[0_1px_5px_rgba(0,0,0,0.65)] flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors pointer-events-auto" title="Find My Location">
-                <i class="fa-solid fa-location-crosshairs text-[15px]"></i>
+            <button onclick="locateUser()" class="absolute bottom-6 right-4 z-[400] w-10 h-10 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.3)] flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors pointer-events-auto" title="Find My Location">
+                <i class="fa-solid fa-location-crosshairs text-lg"></i>
             </button>
         </div>
+
+        <!-- 3. TRAVEL HUB TAB -->
+        <div id="tab-hub" class="hidden flex-col flex-1 h-full overflow-y-auto no-scrollbar bg-slate-50 p-6 fade-in relative">
+            <div class="absolute top-0 left-0 right-0 h-32 bg-slate-900 z-0 rounded-b-[40px] shadow-inner"></div>
+            
+            <div class="relative z-10">
+                <h2 class="text-2xl font-black text-white mb-8 text-center drop-shadow-md">Travel Hub</h2>
+                
+                <div class="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
+                    <button onclick="openModal('flight-modal')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-md transition group">
+                        <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-blue-100"><i class="fa-solid fa-plane-departure text-2xl"></i></div>
+                        <span class="text-sm font-black text-slate-700 tracking-wide">Flights</span>
+                    </button>
+                    
+                    <button onclick="openModal('rv-modal')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-md transition group">
+                        <div class="w-14 h-14 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-amber-100"><i class="fa-solid fa-caravan text-2xl"></i></div>
+                        <span class="text-sm font-black text-slate-700 tracking-wide">RV Specs</span>
+                    </button>
+                    
+                    <button onclick="openModal('gf-modal')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-md transition group relative">
+                        <div class="w-14 h-14 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-purple-100"><i class="fa-solid fa-shield-heart text-2xl"></i></div>
+                        <span class="text-sm font-black text-slate-700 text-center leading-tight tracking-wide">Celiac<br>Cards</span>
+                        <span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span></span>
+                    </button>
+
+                    <button onclick="startCloudSync(true)" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-md transition group overflow-hidden relative">
+                        <div id="hub-sync-bg" class="absolute inset-0 pointer-events-none transition-all duration-300 opacity-10" style="background: conic-gradient(rgba(59,130,246,1) 0%, transparent 0%);"></div>
+                        <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors relative z-10 shadow-inner border border-slate-200"><i class="fa-solid fa-sync text-2xl" id="hub-sync-icon"></i></div>
+                        <span class="text-sm font-black text-slate-700 relative z-10 tracking-wide">Sync Data</span>
+                    </button>
+                </div>
+
+                <div id="hub-emergency-area" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 max-w-md mx-auto">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-red-500 mb-4 flex items-center"><i class="fa-solid fa-truck-medical mr-2"></i> Global Emergency Lines</h3>
+                    <a href="tel:112" class="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between hover:bg-red-100 transition shadow-sm group mb-3">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors shadow-inner">
+                                <i class="fa-solid fa-phone text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-red-600 uppercase">EU Emergency Line</p>
+                                <p class="text-2xl font-black text-slate-800 leading-none mt-1">112</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-red-300"></i>
+                    </a>
+                    <a href="tel:+18557855096" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between hover:bg-slate-100 transition shadow-sm group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-white text-slate-600 flex items-center justify-center border border-slate-200 shadow-sm group-hover:bg-slate-800 group-hover:text-white transition-colors">
+                                <i class="fa-solid fa-headset text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-500 uppercase">Indie Campers Support</p>
+                                <p class="text-base font-black text-slate-800 leading-none mt-1">1-855-785-5096</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                    </a>
+                    <div class="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+                        <p class="text-[11px] text-blue-800 font-semibold leading-relaxed">Local hospital locations are available in the Planner tab, mapped to your current base camp.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR (Sticky Footer) -->
+        <nav class="fixed bottom-0 left-0 right-0 sm:w-[768px] sm:mx-auto bg-white border-t border-slate-200 shadow-[0_-5px_25px_rgba(0,0,0,0.06)] z-[450] flex justify-around items-center pt-2 pb-safe px-2 h-[68px]">
+            <button onclick="switchMainTab('planner')" id="nav-btn-planner" class="flex-1 flex flex-col items-center justify-center gap-1 pb-2 text-blue-600 transition-colors">
+                <div class="nav-icon-wrapper relative px-5 py-1.5 bg-blue-100 rounded-full transition-all duration-300"><i class="fa-solid fa-calendar-days text-lg"></i></div>
+                <span class="text-[10px] font-black uppercase tracking-wider">Planner</span>
+            </button>
+            <button onclick="switchMainTab('map')" id="nav-btn-map" class="flex-1 flex flex-col items-center justify-center gap-1 pb-2 text-slate-400 hover:text-slate-600 transition-colors">
+                <div class="nav-icon-wrapper relative px-5 py-1.5 bg-transparent rounded-full transition-all duration-300"><i class="fa-solid fa-map-location-dot text-lg"></i></div>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Map</span>
+            </button>
+            <button onclick="switchMainTab('hub')" id="nav-btn-hub" class="flex-1 flex flex-col items-center justify-center gap-1 pb-2 text-slate-400 hover:text-slate-600 transition-colors relative">
+                <div class="nav-icon-wrapper relative px-5 py-1.5 bg-transparent rounded-full transition-all duration-300"><i class="fa-solid fa-suitcase text-lg"></i></div>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Hub</span>
+                <span class="absolute top-0 right-1/4 w-2.5 h-2.5 bg-purple-500 rounded-full border border-white"></span>
+            </button>
+        </nav>
         
         <!-- AIRBNB-STYLE DRAGGABLE BOTTOM SHEET -->
-        <div id="bottom-sheet" class="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[768px] sm:mx-auto max-h-[85vh] h-[85vh] bg-slate-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] transform translate-y-full transition-transform duration-300 z-[500] flex flex-col">
+        <div id="bottom-sheet" class="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[768px] sm:mx-auto max-h-[85vh] h-[85vh] bg-slate-50 rounded-t-3xl shadow-[0_-15px_50px_rgba(0,0,0,0.4)] transform translate-y-full transition-transform duration-300 z-[500] flex flex-col">
             <div id="drag-handle-area" class="bg-white rounded-t-3xl border-b border-slate-200 p-3 shrink-0 flex items-center justify-between sticky top-0 z-20 cursor-grab active:cursor-grabbing touch-none">
                 <div class="w-12 h-1.5 bg-slate-300 rounded-full absolute left-1/2 -translate-x-1/2 top-3 pointer-events-none"></div>
                 <h3 id="sheet-title" class="text-xs font-black uppercase tracking-wider text-slate-500 mt-2 pointer-events-none">Activity Details</h3>
@@ -224,7 +280,7 @@
         <div id="sheet-overlay" onclick="closeBottomSheet()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[450] opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
         <!-- SYNC MODAL -->
-        <div id="sync-banner" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 bg-white rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-200 z-[600] transform translate-y-[150%] opacity-0 transition-all duration-500 pointer-events-none">
+        <div id="sync-banner" class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 bg-white rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-slate-200 z-[600] transform translate-y-[200%] opacity-0 transition-all duration-500 pointer-events-none">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-down text-blue-500 animate-bounce"></i>
@@ -755,7 +811,7 @@
         ];
 
         let state = {
-            view: 'list', 
+            tab: 'planner', // Switched from 'view' to 'tab'
             campIndex: 0,
             dayIndex: 0,
             option: 'A',
@@ -773,44 +829,56 @@
         let mapMarkers = [];
         let userLocationMarker = null;
 
-        function switchView(newView) {
-            state.view = newView;
+        // NEW TABS LOGIC
+        function switchMainTab(tabName) {
+            state.tab = tabName;
             
-            const tabList = document.getElementById('tab-list');
-            const tabMap = document.getElementById('tab-map');
-            const campNavTitle = document.getElementById('camp-nav-title');
+            // 1. Hide all main containers and reset nav buttons
+            ['planner', 'map', 'hub'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('flex');
+                
+                const btn = document.getElementById(`nav-btn-${t}`);
+                const wrapper = btn.querySelector('.nav-icon-wrapper');
+                
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-slate-400', 'hover:text-slate-600');
+                btn.querySelector('span').classList.remove('font-black');
+                btn.querySelector('span').classList.add('font-bold');
+                
+                wrapper.classList.remove('bg-blue-100');
+                wrapper.classList.add('bg-transparent');
+            });
             
-            if (newView === 'list') {
-                tabList.className = "flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5";
-                tabMap.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
-                
-                document.getElementById('list-view-container').classList.remove('hidden');
-                document.getElementById('list-view-container').classList.add('flex');
-                document.getElementById('map-view-container').classList.add('hidden');
-                document.getElementById('map-view-container').classList.remove('flex');
-                
-                if (campNavTitle) campNavTitle.innerText = "Select Region / Base Camp";
-                
-                closeBottomSheet();
+            // 2. Show active container
+            const activeContainer = document.getElementById(`tab-${tabName}`);
+            activeContainer.classList.remove('hidden');
+            activeContainer.classList.add('flex'); // All tabs use flex (flex-col for planner/hub)
+            
+            // 3. Style active nav button
+            const activeBtn = document.getElementById(`nav-btn-${tabName}`);
+            const activeWrapper = activeBtn.querySelector('.nav-icon-wrapper');
+            
+            activeBtn.classList.remove('text-slate-400', 'hover:text-slate-600');
+            activeBtn.classList.add('text-blue-600');
+            activeBtn.querySelector('span').classList.remove('font-bold');
+            activeBtn.querySelector('span').classList.add('font-black');
+            
+            activeWrapper.classList.remove('bg-transparent');
+            activeWrapper.classList.add('bg-blue-100');
+
+            // 4. Cleanup and view-specific renders
+            closeBottomSheet();
+
+            if (tabName === 'planner') {
                 renderCampNav();
                 renderCampSiteBanner();
                 renderDayNav();
                 updateToggleUI();
                 renderContent();
-            } else {
-                tabMap.className = "flex-1 py-1.5 text-xs font-black rounded-lg transition-all text-slate-900 bg-white shadow-sm flex items-center justify-center gap-1.5";
-                tabList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
-                
-                document.getElementById('list-view-container').classList.add('hidden');
-                document.getElementById('list-view-container').classList.remove('flex');
-                document.getElementById('map-view-container').classList.remove('hidden');
-                document.getElementById('map-view-container').classList.add('flex');
-                
-                if (campNavTitle) campNavTitle.innerText = "Filter Map by Region";
-                
-                renderCampNav();
+            } else if (tabName === 'map') {
+                renderCampNav(); // Render map filters
                 renderMapLegend();
-                
                 if (!map) {
                     initMap();
                 } else {
@@ -1185,8 +1253,8 @@
             renderDayNav();
             updateToggleUI();
             
-            // Only render content if we are in list view, otherwise it overwrites the list view unnecessarily while on map
-            if (state.view === 'list') {
+            // Re-render planner list under the hood if it's the active tab, mostly to ensure states map over instantly
+            if (state.tab === 'planner') {
                 renderContent();
             }
         }
@@ -1266,34 +1334,6 @@
                 <div class="mt-6 pt-6 border-t border-slate-200">
                     <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 ml-1 flex items-center"><i class="fa-solid fa-truck-medical mr-2"></i> Local Emergency Contacts</h3>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                        <a href="tel:112" class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between hover:bg-red-100 transition shadow-sm group">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors">
-                                    <i class="fa-solid fa-phone text-lg"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-red-600 uppercase">EU Emergency</p>
-                                    <p class="text-lg font-black text-slate-800">112</p>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-red-300"></i>
-                        </a>
-                        
-                        <a href="tel:+18557855096" class="bg-slate-100 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:bg-slate-200 transition shadow-sm group">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-white text-slate-600 flex items-center justify-center group-hover:bg-slate-800 group-hover:text-white transition-colors shadow-sm">
-                                    <i class="fa-solid fa-headset text-lg"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Indie Campers Support</p>
-                                    <p class="text-sm font-black text-slate-800">1-855-785-5096</p>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-slate-400"></i>
-                        </a>
-                    </div>
-                    
                     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden">
                         <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i class="fa-regular fa-hospital text-8xl text-blue-500"></i></div>
                         <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Nearest Hospital to Camp</p>
@@ -1346,7 +1386,7 @@
                 carouselHtml = `
                     <div class="w-full rounded-2xl shadow-inner border border-slate-200 bg-slate-200 h-64 flex flex-col items-center justify-center text-slate-400 mb-5">
                         <i class="fa-solid fa-cloud-arrow-down text-4xl mb-3 opacity-50"></i>
-                        <span class="text-sm font-bold opacity-60 uppercase tracking-widest text-center px-4">Cache Empty<br><span class="text-[10px]">Click sync icon in top right</span></span>
+                        <span class="text-sm font-bold opacity-60 uppercase tracking-widest text-center px-4">Cache Empty<br><span class="text-[10px]">Tap Hub > Sync</span></span>
                     </div>
                 `;
             }
@@ -1428,6 +1468,7 @@
         async function startCloudSync(force = false) {
             if (isSyncing) return;
             isSyncing = true;
+            updateSyncIndicator('syncing');
             
             renderDayNav();
             renderContent();
@@ -1437,17 +1478,18 @@
             const status = document.getElementById('sync-status-text');
             const percentage = document.getElementById('sync-percentage');
             const detailText = document.getElementById('sync-detail-text');
-            const syncIcon = document.getElementById('sync-icon');
-            const syncButtonBg = document.getElementById('sync-button-bg');
             
-            if(syncIcon) syncIcon.classList.add('fa-spin');
+            // Handle hub sync button specific classes if it exists
+            const hubSyncIcon = document.getElementById('hub-sync-icon');
+            const hubSyncBg = document.getElementById('hub-sync-bg');
+            if(hubSyncIcon) hubSyncIcon.classList.add('fa-spin');
 
-            banner.classList.remove('translate-y-[150%]', 'opacity-0');
+            banner.classList.remove('translate-y-[200%]', 'opacity-0');
 
             const updateVisualProgress = (pct) => {
                 progress.style.width = `${pct}%`;
                 percentage.innerText = `${pct}%`;
-                syncButtonBg.style.background = `conic-gradient(rgba(255,255,255,0.3) ${pct}%, transparent ${pct}%)`;
+                if(hubSyncBg) hubSyncBg.style.background = `conic-gradient(rgba(59,130,246,1) ${pct}%, transparent ${pct}%)`;
             };
 
             status.innerText = "Generating Forecast...";
@@ -1569,10 +1611,11 @@
             updateVisualProgress(100);
             
             setTimeout(() => {
-                banner.classList.add('translate-y-[150%]', 'opacity-0');
-                if(syncIcon) syncIcon.classList.remove('fa-spin');
-                syncButtonBg.style.background = `conic-gradient(rgba(255,255,255,0.3) 0%, transparent 0%)`;
+                banner.classList.add('translate-y-[200%]', 'opacity-0');
+                if(hubSyncIcon) hubSyncIcon.classList.remove('fa-spin');
+                if(hubSyncBg) hubSyncBg.style.background = `conic-gradient(rgba(59,130,246,1) 0%, transparent 0%)`;
                 isSyncing = false;
+                updateSyncIndicator('ready');
                 
                 setTimeout(() => {
                     loadWeatherFromCache();
@@ -1580,6 +1623,19 @@
                     renderContent(); 
                 }, 500);
             }, 2500);
+        }
+
+        function updateSyncIndicator(state) {
+            const ind = document.getElementById('sync-status-indicator');
+            if(!ind) return;
+            
+            if (state === 'syncing') {
+                ind.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-blue-400 text-xs"></i><span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Syncing</span>`;
+                ind.className = "bg-blue-900/40 px-3 py-1.5 rounded-lg border border-blue-800/50 shadow-inner flex items-center gap-1.5 transition-all";
+            } else if (state === 'ready') {
+                ind.innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-400 text-xs"></i><span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Offline Ready</span>`;
+                ind.className = "bg-emerald-900/40 px-3 py-1.5 rounded-lg border border-emerald-800/50 shadow-inner flex items-center gap-1.5 transition-all";
+            }
         }
 
         function loadWeatherFromCache() {
@@ -1603,7 +1659,7 @@
             updateToggleUI();
             renderContent();
             
-            if (state.view === 'map' && map) {
+            if (state.tab === 'map' && map) {
                 renderMapMarkers();
             }
         }
@@ -1624,23 +1680,28 @@
             renderContent();
         }
 
+        // Updated renderCampNav to handle both the Planner scroll list AND Map filter buttons
         function renderCampNav() {
-            const nav = document.getElementById('camp-nav');
-            if (state.view === 'list') {
-                nav.innerHTML = tripData.map((camp, index) => {
+            const plannerNav = document.getElementById('camp-nav');
+            const mapNav = document.getElementById('map-camp-filters');
+            
+            if (plannerNav) {
+                plannerNav.innerHTML = tripData.map((camp, index) => {
                     const isActive = state.campIndex === index;
                     const classes = isActive 
                         ? 'bg-white text-slate-900 font-black border-white shadow-md' 
-                        : 'bg-slate-700/50 border-slate-500 text-slate-300 hover:bg-slate-700 font-bold';
+                        : 'bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700 font-bold';
                     return `<button onclick="setCamp(${index})" class="snap-center whitespace-nowrap px-4 py-2 rounded-xl text-sm transition-all duration-200 border ${classes}">${camp.shortName}</button>`;
                 }).join('');
-            } else {
-                nav.innerHTML = tripData.map((camp, index) => {
+            }
+            
+            if (mapNav) {
+                mapNav.innerHTML = tripData.map((camp, index) => {
                     const isSelected = state.mapFilters.camps.includes(index);
                     const classes = isSelected 
                         ? 'bg-blue-500 text-white font-black border-blue-500 shadow-md' 
-                        : 'bg-slate-700/50 border-slate-500 text-slate-300 hover:bg-slate-700 font-bold opacity-60';
-                    return `<button onclick="toggleMapCampFilter(${index})" class="snap-center whitespace-nowrap px-4 py-2 rounded-xl text-sm transition-all duration-200 border ${classes}"><i class="fa-solid ${isSelected ? 'fa-check' : 'fa-plus'} mr-1"></i> ${camp.shortName}</button>`;
+                        : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 font-bold';
+                    return `<button onclick="toggleMapCampFilter(${index})" class="snap-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs transition-all duration-200 border ${classes} flex items-center gap-1"><i class="fa-solid ${isSelected ? 'fa-check' : 'fa-plus'}"></i> ${camp.shortName}</button>`;
                 }).join('');
             }
         }
@@ -1791,6 +1852,8 @@
             const isCached = localStorage.getItem('rv_sync_completed');
             if (!isCached) {
                 startCloudSync();
+            } else {
+                updateSyncIndicator('ready');
             }
         });
     </script>
