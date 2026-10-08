@@ -1723,7 +1723,7 @@
 
     <!-- PWA INSTALLATION (Blob Manifest & Service Worker) -->
     <script>
-        // 1. Generate the Web Manifest dynamically
+        // 1. Generate the Web Manifest with the clean Hub-style Caravan Icon
         const manifest = {
             name: "Euro RV '27 Planner",
             short_name: "RV Planner",
@@ -1732,8 +1732,7 @@
             background_color: "#f8fafc",
             theme_color: "#0f172a",
             icons: [{
-                // Encoded SVG of a Caravan so you don't need external image files
-                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBmaWxsPSIjMGYxNzJhIj48cGF0aCBkPSJNNTEyIDE5MmMwLTE3LjctMTQuMy0zMi0zMi0zMmgtNDhWMTI4YzAtMzUuMy0yOC43LTY0LTY0LTY0SDEyOEM5Mi43IDY0IDY0IDkyLjcgNjQgMTI4djE2aC0xNkMyMS41IDE0NCAwIDE2NS41IDAgMTkydjE5MmMwIDE3LjcgMTQuMyAzMiAzMiAzMmgxNmMwIDM1LjMgMjguNyA2NCA2NCA2NHM2NC0yOC43IDY0LTY0aDI1NmMwIDM1LjMgMjguNyA2NCA2NCA2NHM2NC0yOC43IDY0LTY0aDE2YzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE5MnoiLz48L3N2Zz4=", 
+                src: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%20width%3D%22512%22%20height%3D%22512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22115%22%20fill%3D%22%23fffbeb%22%2F%3E%3Cpath%20d%3D%22M512%20192c0-17.7-14.3-32-32-32h-48V128c0-35.3-28.7-64-64-64H128C92.7%2064%2064%2092.7%2064%20128v16h-16C21.5%20144%200%20165.5%200%20192v192c0%2017.7%2014.3%2032%2032%2032h16c0%2035.3%2028.7%2064%2064%2064s64-28.7%2064-64h256c0%2035.3%2028.7%2064%2064%2064s64-28.7%2064-64h16c17.7%200%2032-14.3%2032-32V192z%22%20fill%3D%22%23d97706%22%20transform%3D%22translate%2864%2C64%29%20scale%280.75%29%22%2F%3E%3C%2Fsvg%3E",
                 sizes: "512x512",
                 type: "image/svg+xml",
                 purpose: "any maskable"
