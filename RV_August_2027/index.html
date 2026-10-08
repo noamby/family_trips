@@ -1721,6 +1721,54 @@
         });
     </script>
 
+    <!-- PWA INSTALLATION (Blob Manifest & Service Worker) -->
+    <script>
+        // 1. Generate the Web Manifest dynamically
+        const manifest = {
+            name: "Euro RV '27 Planner",
+            short_name: "RV Planner",
+            start_url: location.href,
+            display: "standalone",
+            background_color: "#f8fafc",
+            theme_color: "#0f172a",
+            icons: [{
+                // Encoded SVG of a Caravan so you don't need external image files
+                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBmaWxsPSIjMGYxNzJhIj48cGF0aCBkPSJNNTEyIDE5MmMwLTE3LjctMTQuMy0zMi0zMi0zMmgtNDhWMTI4YzAtMzUuMy0yOC43LTY0LTY0LTY0SDEyOEM5Mi43IDY0IDY0IDkyLjcgNjQgMTI4djE2aC0xNkMyMS41IDE0NCAwIDE2NS41IDAgMTkydjE5MmMwIDE3LjcgMTQuMyAzMiAzMiAzMmgxNmMwIDM1LjMgMjguNyA2NCA2NCA2NHM2NC0yOC43IDY0LTY0aDI1NmMwIDM1LjMgMjguNyA2NCA2NCA2NHM2NC0yOC43IDY0LTY0aDE2YzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE5MnoiLz48L3N2Zz4=", 
+                sizes: "512x512",
+                type: "image/svg+xml",
+                purpose: "any maskable"
+            }]
+        };
+        
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestUrl;
+        document.head.appendChild(link);
+
+        // 2. Generate the Service Worker dynamically
+        const swCode = `
+            self.addEventListener('install', (e) => { self.skipWaiting(); });
+            self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', (e) => {
+                e.respondWith(fetch(e.request).catch(() => new Response('Offline mode active')));
+            });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+
+        // 3. Register the Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(swUrl)
+                    .then(reg => console.log('Service Worker registered successfully!'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+
     <!-- NEW: FIREBASE PARTNER SYNC SCRIPT (Must be type="module") -->
     <script type="module">
         // Use CDN URLs so it works flawlessly in a raw HTML file
